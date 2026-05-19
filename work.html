@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Work — Paul Petrowsky</title>
+  <meta name="description" content="Selected case studies across twenty years of design — Random House, Dom & Tom, Danone, Gemini Mobile, and Meta. Each is gated behind a single shared password.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Work — Paul Petrowsky">
+  <meta property="og:description" content="Selected case studies across twenty years of design.">
+  <meta property="og:url" content="https://paulpetrowsky.com/work">
+
+  <meta name="theme-color" content="#F6F6F8">
+
+  <link rel="preload" href="/fonts/Geomanist-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Geomanist-Medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/DDCHardware-Regular.woff2" as="font" type="font/woff2" crossorigin>
+
+  <style>
+    /* ───────── Fonts (matched with index.html) ───────── */
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Regular.woff2") format("woff2");        font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Regular-Italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Medium.woff2") format("woff2");         font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Medium-Italic.woff2") format("woff2");  font-weight: 500; font-style: italic; font-display: swap; }
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Bold.woff2") format("woff2");           font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: "DDC Hardware";src: url("/fonts/DDCHardware-Regular.woff2") format("woff2");     font-weight: 400; font-style: normal; font-display: swap; }
+
+    /* ───────── Tokens ───────── */
+    :root {
+      --bg:    #F6F6F8;
+      --fg:    #252525;
+      --muted: rgba(37, 37, 37, 0.55);
+      --soft:  rgba(37, 37, 37, 0.74);
+      --rule:  rgba(37, 37, 37, 0.14);
+      --red:   #E73F3E;
+
+      --ddc:  "DDC Hardware", ui-sans-serif, system-ui, sans-serif;
+      --body: "Geomanist", -apple-system, BlinkMacSystemFont, "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+
+      --pad:    clamp(24px, 5vw, 80px);
+      --max-w:  1320px;
+      --nav-h:  72px;
+      --frame:  10px;
+      --frame-color: rgba(37, 37, 37, 0.07);
+      --radius: 10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; }
+    ::selection { background: var(--red); color: #fff; }
+
+    html { scroll-behavior: smooth; background: var(--red); }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--body);
+      font-size: 18px;
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    .label {
+      font-family: var(--ddc);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ───────── Page frame ───────── */
+    .frame {
+      position: fixed;
+      top: var(--nav-h);
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 5;
+      border-top:   var(--frame) solid var(--frame-color);
+      border-left:  var(--frame) solid var(--frame-color);
+      border-right: var(--frame) solid var(--frame-color);
+    }
+
+    /* ───────── Nav ───────── */
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--bg);
+      border-bottom: 1px solid var(--rule);
+    }
+    .site-nav__row {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 18px var(--pad);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--red);
+      color: #fff;
+      font-family: var(--ddc);
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      padding: 0.38em 0.62em 0.28em 0.55em;
+      line-height: 0.9;
+      text-decoration: none;
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 0.35em), calc(100% - 0.35em) 100%, 0 100%);
+      justify-self: start;
+    }
+    .site-nav__links {
+      display: flex; align-items: center; gap: 22px;
+    }
+    .site-nav__links a {
+      font-family: var(--ddc);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--soft);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      transition: color .15s ease, border-color .15s ease;
+    }
+    .site-nav__links a.is-current { color: var(--fg); border-bottom-color: var(--ink); }
+    .site-nav__links a:hover { color: var(--red); border-bottom-color: var(--red); }
+
+    main {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 var(--pad);
+    }
+
+    /* ───────── Page header — masthead-ish title block ───────── */
+    .page-head {
+      padding: clamp(48px, 7vw, 96px) 0 clamp(28px, 4vw, 48px);
+    }
+    .page-head__eyebrow { display: block; margin-bottom: 18px; }
+    .page-head__title {
+      font-family: var(--ddc);
+      font-weight: 400;
+      font-size: clamp(56px, 9vw, 128px);
+      line-height: 0.92;
+      letter-spacing: 0.005em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin: 0;
+    }
+    .page-head__lede {
+      margin-top: clamp(20px, 2.4vw, 28px);
+      font-size: clamp(17px, 1.5vw, 20px);
+      line-height: 1.5;
+      letter-spacing: -0.005em;
+      color: var(--soft);
+      max-width: 56ch;
+    }
+    .page-head__back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: clamp(20px, 2.4vw, 28px);
+      font-family: var(--ddc);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--soft);
+      text-decoration: none;
+      transition: color .15s ease, gap .25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .page-head__back:hover { color: var(--red); gap: 12px; }
+
+    /* ───────── Work list ───────── */
+    .work-list {
+      list-style: none;
+      margin: 0 0 clamp(48px, 6vw, 80px);
+      padding: 0;
+      border-top: 1px solid var(--rule);
+    }
+    .work-list li { margin: 0; }
+    .work-item {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr) auto;
+      gap: clamp(20px, 2.4vw, 32px);
+      align-items: center;
+      padding: clamp(22px, 2.4vw, 28px) 0;
+      border-bottom: 1px solid var(--rule);
+      text-decoration: none;
+      color: inherit;
+    }
+    .work-item__thumb {
+      width: 120px;
+      height: 120px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+      background: var(--bg);
+    }
+    .work-item__thumb[data-brand="dom-and-tom"]   { background: #f36c29; }
+    .work-item__thumb[data-brand="gemini"]        { background: #00c4ed; }
+    .work-item__thumb[data-brand="danone"]        { background: #0c5aa6; }
+    .work-item__thumb[data-brand="random-house"]  { background: #2a1a14; }
+    .work-item__thumb::before {
+      content: attr(data-brand);
+      position: absolute;
+      inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      padding: 8px;
+      text-align: center;
+      font-family: var(--ddc);
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.34);
+      pointer-events: none;
+    }
+    .work-item__thumb img {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: inherit;
+      transition: transform .35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .work-item:hover .work-item__thumb img { transform: scale(1.04); }
+    .work-item__content {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+    .work-item__meta {
+      font-family: var(--ddc);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .work-item__title {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: clamp(20px, 1.8vw, 26px);
+      line-height: 1.2;
+      letter-spacing: -0.015em;
+      margin: 0;
+      color: var(--fg);
+      transition: color .15s ease;
+    }
+    .work-item__title em { font-style: italic; font-weight: 400; color: var(--soft); }
+    .work-item:hover .work-item__title { color: var(--red); }
+    .work-item__sub {
+      font-family: var(--body);
+      font-size: clamp(15px, 1.2vw, 17px);
+      line-height: 1.45;
+      color: var(--soft);
+      margin: 0;
+      max-width: 60ch;
+    }
+    .work-item__lock {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      transition: color .15s ease, transform .15s ease;
+    }
+    .work-item:hover .work-item__lock {
+      color: var(--red);
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 640px) {
+      .work-item {
+        grid-template-columns: 80px minmax(0, 1fr) auto;
+        gap: 14px;
+      }
+      .work-item__thumb { width: 80px; height: 80px; }
+    }
+
+    /* ───────── Footer ───────── */
+    .foot {
+      border-top: 1px solid var(--rule);
+      padding: 24px var(--pad) 36px;
+      max-width: var(--max-w);
+      margin: 0 auto;
+    }
+    .foot__row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-family: var(--body);
+      font-weight: 400;
+      font-size: 14px;
+      letter-spacing: -0.005em;
+      color: var(--muted);
+    }
+    .foot__row a {
+      color: var(--soft);
+      text-decoration: none;
+      transition: color .15s ease;
+    }
+    .foot__row a:hover { color: var(--red); }
+    .foot__row a .heart { color: var(--red); }
+
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--red);
+      outline-offset: 3px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="site-nav" id="nav" aria-label="Primary">
+    <div class="site-nav__row">
+      <a href="https://snacksdesign.com" target="_blank" rel="noopener" class="logo" aria-label="SNACKS home">SNACKS</a>
+      <div class="site-nav__links">
+        <a href="/#work" class="is-current">Work</a>
+        <a href="https://www.linkedin.com/in/ppetrowsky" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="/#contact">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="frame" aria-hidden="true"></div>
+
+  <main id="top">
+    <header class="page-head">
+      <span class="label page-head__eyebrow">Twenty years · chronological</span>
+      <h1 class="page-head__title">Work</h1>
+      <p class="page-head__lede">
+        Five case studies, oldest to most recent. Each is gated behind a single shared password — request it and I'll send it over.
+      </p>
+      <a href="/" class="page-head__back" aria-label="Back to home"><span aria-hidden="true">←</span> Back to home</a>
+    </header>
+
+    <ol class="work-list" aria-label="Case studies in chronological order">
+
+      <!-- 2005 – 2010 — Random House -->
+      <li>
+        <a class="work-item" href="/work/random-house" aria-label="Random House — Covers & Interiors (password protected)">
+          <span class="work-item__thumb" data-brand="random-house">
+            <img src="/images/chapters/05-random-house.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
+          </span>
+          <span class="work-item__content">
+            <span class="work-item__meta">2005 – 2010 · Triumph Books / Random House</span>
+            <h2 class="work-item__title">Random House — <em>Covers &amp; Interiors</em></h2>
+            <p class="work-item__sub">Five-plus years designing book covers and interiors at Triumph Books, a Random House imprint. Where the typography habits — the pacing, the hierarchy, the respect for the page — started.</p>
+          </span>
+          <span class="work-item__lock" aria-label="Password protected">
+            <svg width="16" height="18" viewBox="0 0 14 16" aria-hidden="true">
+              <rect x="2" y="7" width="10" height="8" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/>
+              <path d="M4 7V4a3 3 0 1 1 6 0v3" stroke="currentColor" stroke-width="1.4" fill="none"/>
+            </svg>
+          </span>
+        </a>
+      </li>
+
+      <!-- 2010 – 2019 — Dom & Tom -->
+      <li>
+        <a class="work-item" href="/work/dom-and-tom" aria-label="Dom & Tom — A Giant Ball of Clay (password protected)">
+          <span class="work-item__thumb" data-brand="dom-and-tom">
+            <img src="/images/chapters/02-dom-tom.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
+          </span>
+          <span class="work-item__content">
+            <span class="work-item__meta">2010 – 2019 · First design hire to Chief Design Officer</span>
+            <h2 class="work-item__title">Dom &amp; Tom — <em>A Giant Ball of Clay</em></h2>
+            <p class="work-item__sub">Molding a digital product agency from first design hire to an 18-person practice. Nine years, four titles, dozens of clients, and the design culture that scaled alongside the business.</p>
+          </span>
+          <span class="work-item__lock" aria-label="Password protected">
+            <svg width="16" height="18" viewBox="0 0 14 16" aria-hidden="true">
+              <rect x="2" y="7" width="10" height="8" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/>
+              <path d="M4 7V4a3 3 0 1 1 6 0v3" stroke="currentColor" stroke-width="1.4" fill="none"/>
+            </svg>
+          </span>
+        </a>
+      </li>
+
+      <!-- ~2015 — Danone -->
+      <li>
+        <a class="work-item" href="/work/danone" aria-label="Danone Tests a New Market (password protected)">
+          <span class="work-item__thumb" data-brand="danone">
+            <img src="/images/chapters/04-danone.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
+          </span>
+          <span class="work-item__content">
+            <span class="work-item__meta">~2015 · Dom &amp; Tom era</span>
+            <h2 class="work-item__title">Danone <em>Tests a New Market</em></h2>
+            <p class="work-item__sub">How a design team learned to empathize across cultures, categories, and consumers. The brief looked like packaging research; the deeper job was teaching the team to listen before designing.</p>
+          </span>
+          <span class="work-item__lock" aria-label="Password protected">
+            <svg width="16" height="18" viewBox="0 0 14 16" aria-hidden="true">
+              <rect x="2" y="7" width="10" height="8" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/>
+              <path d="M4 7V4a3 3 0 1 1 6 0v3" stroke="currentColor" stroke-width="1.4" fill="none"/>
+            </svg>
+          </span>
+        </a>
+      </li>
+
+      <!-- ~2017 — Gemini Mobile -->
+      <li>
+        <a class="work-item" href="/work/gemini-mobile" aria-label="Dawn of Gemini Mobile (password protected)">
+          <span class="work-item__thumb" data-brand="gemini">
+            <img src="/images/chapters/03-gemini-mobile.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
+          </span>
+          <span class="work-item__content">
+            <span class="work-item__meta">~2017 · Dom &amp; Tom era</span>
+            <h2 class="work-item__title">Dawn of <em>Gemini Mobile</em></h2>
+            <p class="work-item__sub">A React Native mobile exchange for the crypto revolution — built fast, shipped at scale. Took an early-stage exchange from web-only to a mobile app trusted by traders through one of the wildest stretches in crypto.</p>
+          </span>
+          <span class="work-item__lock" aria-label="Password protected">
+            <svg width="16" height="18" viewBox="0 0 14 16" aria-hidden="true">
+              <rect x="2" y="7" width="10" height="8" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/>
+              <path d="M4 7V4a3 3 0 1 1 6 0v3" stroke="currentColor" stroke-width="1.4" fill="none"/>
+            </svg>
+          </span>
+        </a>
+      </li>
+
+      <!-- 2021 – present — Meta -->
+      <li>
+        <a class="work-item" href="/work/meta" aria-label="Architecting Meta's Support (password protected)">
+          <span class="work-item__thumb" data-brand="meta">
+            <img src="/images/chapters/01-meta.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
+          </span>
+          <span class="work-item__content">
+            <span class="work-item__meta">2021 – present · Central Integrity &amp; Support</span>
+            <h2 class="work-item__title">Architecting Meta's <em>Support</em></h2>
+            <p class="work-item__sub">Almost five years inside Meta's support stack — from individual resolution flows to the AI assistant rolling out to billions. The work is equal parts product design and system architecture, across the largest social platforms in the world.</p>
+          </span>
+          <span class="work-item__lock" aria-label="Password protected">
+            <svg width="16" height="18" viewBox="0 0 14 16" aria-hidden="true">
+              <rect x="2" y="7" width="10" height="8" rx="1" stroke="currentColor" stroke-width="1.4" fill="none"/>
+              <path d="M4 7V4a3 3 0 1 1 6 0v3" stroke="currentColor" stroke-width="1.4" fill="none"/>
+            </svg>
+          </span>
+        </a>
+      </li>
+
+    </ol>
+  </main>
+
+  <footer class="foot">
+    <div class="foot__row">
+      <a href="https://snacksdesign.com/" target="_blank" rel="noopener">Made with <span class="heart" aria-hidden="true">&hearts;</span> love in Chicago</a>
+      <span>Make. Progress. Work the problem.</span>
+    </div>
+  </footer>
+
+  <script>
+    (function syncNavHeight() {
+      var nav = document.querySelector('.site-nav');
+      if (!nav) return;
+      function set() {
+        var h = nav.getBoundingClientRect().height;
+        document.documentElement.style.setProperty('--nav-h', h + 'px');
+      }
+      set();
+      window.addEventListener('load', set);
+      window.addEventListener('resize', set);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(set);
+    })();
+  </script>
+
+</body>
+</html>

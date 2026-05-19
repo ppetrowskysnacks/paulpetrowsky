@@ -1,0 +1,35 @@
+[build]
+  publish = "."
+
+# Pretty URLs — /work serves work.html so the address bar stays clean.
+[[redirects]]
+  from = "/work"
+  to = "/work.html"
+  status = 200
+
+# HTML should never be cached for long — we want pushes to go live immediately.
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Fonts are filename-stable, safe to cache for a year.
+[[headers]]
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+    Access-Control-Allow-Origin = "*"
+
+# Sensible security headers for a personal static site.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "interest-cohort=()"

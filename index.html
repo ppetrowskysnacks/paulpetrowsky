@@ -1,0 +1,1787 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paul Petrowsky — Designer</title>
+  <meta name="description" content="Paul Petrowsky. Designer and co-founder. Principal Product Designer at Meta. Co-founder of SNACKS. Twenty years in design.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Paul Petrowsky — Designer">
+  <meta property="og:description" content="Designer and co-founder. Principal Product Designer at Meta. Co-founder of SNACKS. Twenty years in design.">
+  <meta property="og:url" content="https://paulpetrowsky.com">
+
+  <!-- Match the cream paper so the browser chrome blends into the page;
+       the red splash only appears on overscroll, not in the address bar. -->
+  <meta name="theme-color" content="#F6F6F8">
+
+  <link rel="preload" href="/fonts/Geomanist-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Geomanist-Medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/DDCHardware-Regular.woff2" as="font" type="font/woff2" crossorigin>
+
+  <style>
+    /* ───────── Fonts ───────── */
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Regular.woff2") format("woff2");        font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Regular-Italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Medium.woff2") format("woff2");         font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Medium-Italic.woff2") format("woff2");  font-weight: 500; font-style: italic; font-display: swap; }
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Bold.woff2") format("woff2");           font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: "DDC Hardware";src: url("/fonts/DDCHardware-Regular.woff2") format("woff2");     font-weight: 400; font-style: normal; font-display: swap; }
+
+    /* ───────── Tokens — pulled from SNACKS WWW for consistency ───────── */
+    :root {
+      --bg:    #F6F6F8;
+      --fg:    #252525;
+      --muted: rgba(37, 37, 37, 0.55);
+      --soft:  rgba(37, 37, 37, 0.74);
+      --rule:  rgba(37, 37, 37, 0.14);
+      --red:   #E73F3E;
+
+      --ddc:  "DDC Hardware", ui-sans-serif, system-ui, sans-serif;
+      --body: "Geomanist", -apple-system, BlinkMacSystemFont, "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+
+      --pad:    clamp(24px, 5vw, 80px);
+      --col-w:  860px;       /* narrative max width */
+      --max-w:  1320px;      /* page outer max */
+      --radius: 10px;        /* shared corner radius for card-style imagery */
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; }
+    ::selection { background: var(--red); color: #fff; }
+
+    /* Overscroll splash —
+       The <html> root is painted SNACKS red. The <body> sits on top in cream,
+       covering the viewport. When the page rubber-bands past the top or bottom
+       edge (macOS trackpad, iOS Safari), the red html background reveals itself
+       briefly as a splash of color. */
+    html {
+      scroll-behavior: smooth;
+      background: var(--red);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--body);
+      font-size: 18px;
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    .label {
+      font-family: var(--ddc);
+      font-weight: 400;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* Canonical section header — every section h2 uses class="label",
+       sits centered above its content, in Geomanist Medium uppercase.
+       Inline labels (span.label, e.g. EMAIL/LINKEDIN) keep the DDC
+       small-caps treatment from the base .label class. */
+    h2.label {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 clamp(14px, 1.4vw, 18px);
+      text-align: center;
+    }
+
+    /* ───────── Page frame — subtle 10px rule on top, sides ─────────
+       A single fixed element below the nav with borders on top, left,
+       and right. Using a single element (vs. three separate strips)
+       guarantees the corners meet flush and the widths read as
+       perfectly equal. Lighter than --rule so the nav's 1px divider
+       stays the heavier line in the rule system. */
+    :root {
+      /* --nav-h is set imperatively from JS at boot and on resize so the
+         frame's top border lines up flush with the nav's bottom edge
+         regardless of font rendering, nav padding, or content changes.
+         The fallback 72px covers the current nav height (~71.3px). */
+      --nav-h: 72px;
+      --frame: 10px;
+      --frame-color: rgba(37, 37, 37, 0.07);
+    }
+    .frame {
+      position: fixed;
+      top: var(--nav-h);
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 5;
+      border-top:   var(--frame) solid var(--frame-color);
+      border-left:  var(--frame) solid var(--frame-color);
+      border-right: var(--frame) solid var(--frame-color);
+    }
+
+    /* ───────── Site nav — small, almost not there ───────── */
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--bg);
+      border-bottom: 1px solid var(--rule);
+    }
+    .site-nav__row {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 18px var(--pad);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    /* SNACKS studio mark — copied byte-for-byte from snacksdesign.com's
+       .logo so the corner reads identically to the studio brand.
+       The only departure from the source is href: this lives on Paul's
+       personal site, so the mark links out to the studio. */
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--red);
+      color: #fff;
+      font-family: var(--ddc);
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      padding: 0.38em 0.62em 0.28em 0.55em;
+      line-height: 0.9;
+      text-decoration: none;
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 0.35em), calc(100% - 0.35em) 100%, 0 100%);
+      justify-self: start;
+    }
+    .site-nav__links {
+      display: flex; align-items: center; gap: 22px;
+    }
+    .site-nav__links a {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--soft);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      transition: color .15s ease, border-color .15s ease;
+    }
+    .site-nav__links a:hover { color: var(--red); border-bottom-color: var(--red); }
+
+    /* ───────── Page frame ───────── */
+    main {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 var(--pad);
+    }
+
+    /* ───────── Hero: circular portrait + name masthead ─────────
+       The name leads. The circular photo anchors the left. The page
+       opens like a book cover. */
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: clamp(28px, 5vw, 56px);
+      padding: clamp(48px, 8vw, 112px) 0 clamp(40px, 6vw, 80px);
+      align-items: center;
+    }
+    @media (min-width: 880px) {
+      .hero { grid-template-columns: minmax(240px, 360px) minmax(0, 1fr); }
+    }
+
+    /* Portrait — circular 3D flip card. Click to flip; drag horizontally
+       on touch/mouse to peek and snap to the nearest face. */
+    .portrait {
+      margin: 0;
+      position: relative;
+      perspective: 1400px;
+    }
+    .portrait__flipper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      border-radius: 50%;
+      cursor: grab;
+      transform-style: preserve-3d;
+      transition: transform .7s cubic-bezier(0.2, 0.85, 0.2, 1);
+      -webkit-user-select: none;
+              user-select: none;
+      touch-action: pan-y;          /* still allow vertical page scroll */
+      outline-offset: 8px;
+    }
+    .portrait__flipper:hover { transform: scale(1.015); }
+    .portrait.is-flipped .portrait__flipper { transform: rotateY(180deg); }
+    .portrait.is-flipped .portrait__flipper:hover { transform: rotateY(180deg) scale(1.015); }
+    .portrait.is-dragging .portrait__flipper {
+      transition: none;
+      cursor: grabbing;
+    }
+    .portrait__face {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #1a1a1a;
+      -webkit-backface-visibility: hidden;
+              backface-visibility: hidden;
+    }
+    .portrait__face--back { transform: rotateY(180deg); }
+    .portrait__face img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      -webkit-user-drag: none;
+              user-drag: none;
+      pointer-events: none;
+    }
+    .portrait__face--front img { object-position: center 22%; }
+    /* Zoom past the dark frame baked into the source photo and lift the
+       crop so the two faces sit closer to the circle's center. */
+    .portrait__face--back  img {
+      object-position: center 38%;
+      transform: scale(1.25);
+      transform-origin: 50% 38%;
+    }
+
+    /* Name masthead */
+    .intro--name { display: block; }
+    .intro__name {
+      font-family: var(--ddc);
+      font-weight: 400;
+      font-size: clamp(56px, 9vw, 128px);
+      line-height: 0.92;
+      letter-spacing: 0.005em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin: 0 0 clamp(18px, 2.4vw, 28px);
+      display: flex;
+      flex-direction: column;
+    }
+    .intro__name span { display: block; }
+    .intro__tag {
+      font-family: var(--body);
+      font-weight: 400;
+      font-size: clamp(17px, 1.4vw, 20px);
+      line-height: 1.5;
+      letter-spacing: -0.003em;
+      color: var(--soft);
+      margin: 0;
+      max-width: 56ch;
+    }
+    .intro__tag a {
+      color: var(--fg);
+      text-decoration: none;
+      border-bottom: 1.5px solid var(--red);
+      padding-bottom: 1px;
+      transition: color .15s ease;
+    }
+    .intro__tag a:hover { color: var(--red); }
+
+
+
+    /* ───────── Story / running narrative ─────────
+       Single column of running prose, like a letter. Quiet section heads. */
+    .story {
+      padding: clamp(40px, 6vw, 72px) 0;
+      border-top: 1px solid var(--rule);
+    }
+    .story__head {
+      max-width: var(--max-w);
+      margin: 0 auto clamp(28px, 4vw, 40px);
+      padding: 0 var(--pad);
+    }
+    .story__inner {
+      max-width: var(--col-w);
+      margin: 0 auto;
+      padding: 0 var(--pad);
+    }
+    .prose p {
+      margin: 0 0 1.05em;
+      font-size: clamp(18px, 1.45vw, 20px);
+      line-height: 1.6;
+      color: var(--fg);
+      max-width: 64ch;
+    }
+    .prose p strong { font-weight: 500; }
+    .prose p em { font-style: italic; }
+    .prose a {
+      color: var(--fg);
+      text-decoration: none;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 1px;
+      transition: color .15s ease, border-color .15s ease;
+    }
+    .prose a:hover { color: var(--red); border-bottom-color: var(--red); }
+    .prose .pull {
+      margin: 1.6em 0 1.6em;
+      padding: 0 0 0 18px;
+      border-left: 2px solid var(--red);
+      font-style: italic;
+      color: var(--soft);
+      font-size: clamp(18px, 1.45vw, 20px);
+      max-width: 60ch;
+    }
+
+    /* ───────── Section frame for body sections (Case, Work, Friends, Contact) ───────── */
+    .row {
+      padding: clamp(40px, 6vw, 72px) 0;
+      border-top: 1px solid var(--rule);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: clamp(20px, 3vw, 36px);
+    }
+    @media (min-width: 880px) {
+      .row { grid-template-columns: minmax(320px, 420px) minmax(0, 1fr); }
+    }
+    .row__inner { max-width: var(--col-w); }
+
+    /* Featured case */
+    .case__title {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: clamp(22px, 2.2vw, 28px);
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      margin: 0 0 16px;
+    }
+    .case__title em { font-style: italic; color: var(--soft); font-weight: 500; }
+    .case__copy p {
+      margin: 0 0 1em;
+      max-width: 60ch;
+      color: var(--fg);
+      font-size: clamp(17px, 1.4vw, 19px);
+      line-height: 1.6;
+    }
+    .case__cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: 16px;
+      color: var(--fg);
+      text-decoration: none;
+      border-bottom: 1.5px solid var(--red);
+      padding-bottom: 2px;
+      transition: color .15s ease;
+    }
+    .case__cta::after { content: "→"; transition: transform .15s ease; }
+    .case__cta:hover { color: var(--red); }
+    .case__cta:hover::after { transform: translateX(3px); }
+    .case__note {
+      margin-top: 28px;
+      font-family: var(--ddc);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+    .case__note a { color: var(--soft); border-bottom: 1px solid var(--rule); padding-bottom: 1px; text-decoration: none; }
+    .case__note a:hover { color: var(--red); border-bottom-color: var(--red); }
+
+    /* ───────── Chapters — SNACKS-pattern carousel ─────────
+       Full-width section (not row-grid) so the carousel breathes.
+       Five slides: Meta (published), Dom & Tom, Gemini Mobile, Danone,
+       Random House (all in progress). Numbered nav + arrows + arrow
+       keys + touch swipe drive the slide change. */
+    .chapters {
+      /* No padding-bottom — the next section's padding-top handles the
+         spacing between sections. The car-controls bar already has its
+         own internal padding so the controls breathe inside their bar. */
+      padding: clamp(40px, 6vw, 72px) 0 0;
+      border-top: 1px solid var(--rule);
+    }
+    .chapters__head {
+      max-width: var(--max-w);
+      margin: 0 auto clamp(28px, 4vw, 40px);
+      padding: 0 var(--pad);
+      text-align: center;
+    }
+    .chapters__head .label {
+      display: block;
+      margin-bottom: 12px;
+    }
+    .chapters__lede {
+      font-family: var(--body);
+      font-weight: 400;
+      font-size: clamp(18px, 1.5vw, 21px);
+      line-height: 1.5;
+      letter-spacing: -0.005em;
+      color: var(--soft);
+      max-width: 56ch;
+      margin: 0 auto;
+    }
+
+    .carousel {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 var(--pad);
+      position: relative;
+      /* Allow vertical page scroll on mobile; horizontal drags get
+         delivered to our pointer handlers for swipe navigation. */
+      touch-action: pan-y;
+    }
+    .car-stage {
+      position: relative;
+      /* Bounded height so absolute-positioned slides stack cleanly.
+         Falls back to natural slide height on narrow viewports below. */
+      height: clamp(380px, 36vw, 520px);
+    }
+
+    /* Subtle affordance arrows — soft white circles sitting in the
+       gutter beside the card. Default low opacity, brightens on hover.
+       Hidden on mobile where touch swipe is the obvious interaction. */
+    .car-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(37, 37, 37, 0.08);
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(37, 37, 37, 0.08);
+      cursor: pointer;
+      z-index: 5;
+      color: var(--soft);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      opacity: 0.85;
+      transition: opacity .2s ease, transform .15s ease, color .15s ease, box-shadow .15s ease;
+    }
+    .car-arrow:hover {
+      opacity: 1;
+      transform: translateY(-50%) scale(1.06);
+      color: var(--fg);
+      box-shadow: 0 4px 16px rgba(37, 37, 37, 0.14);
+    }
+    .car-arrow--prev { left: calc(var(--pad) / 3); }
+    .car-arrow--next { right: calc(var(--pad) / 3); }
+    @media (max-width: 720px) {
+      .car-arrow { display: none; }
+    }
+    .car-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transform: translateX(40px);
+      transition: opacity .4s ease, transform .4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow .25s ease;
+      pointer-events: none;
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: clamp(24px, 3.2vw, 48px);
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+      /* Block browser-native link drag so our pointer-based swipe owns
+         the gesture. Text selection during a drag also off so the
+         cursor doesn't start highlighting copy mid-swipe. */
+      -webkit-user-select: none;
+              user-select: none;
+      -webkit-user-drag: none;
+      /* Soft elevated card unifies image + text. Padding and a generous
+         radius hold the contents; the shadow gives a quiet sense of lift
+         against the cream page without feeling heavy. */
+      background: #FFFFFF;
+      border-radius: clamp(14px, 1.4vw, 18px);
+      padding: clamp(24px, 3vw, 48px);
+      box-shadow:
+        0 1px 0 rgba(37, 37, 37, 0.04),
+        0 8px 24px rgba(37, 37, 37, 0.05);
+    }
+    .car-slide.is-active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+    .car-slide.is-leaving {
+      opacity: 0;
+      transform: translateX(-40px);
+    }
+    a.car-slide.is-active { cursor: grab; }
+    a.car-slide.is-active:active,
+    .carousel.is-dragging a.car-slide.is-active { cursor: grabbing; }
+    a.car-slide.is-active:hover {
+      box-shadow:
+        0 1px 0 rgba(37, 37, 37, 0.06),
+        0 18px 44px rgba(37, 37, 37, 0.10);
+    }
+    a.car-slide.is-active:hover .case-cta { gap: 14px; }
+    /* Lock + arrow icons in the CTA — inline-flex aligned, follow CTA color. */
+    .case-cta .icon-lock,
+    .case-cta .icon-arrow {
+      display: inline-block;
+      flex: 0 0 auto;
+    }
+    .case-cta .icon-lock { opacity: 0.85; }
+
+    /* Visual reference panel. Brand-tinted fallback shows through
+       when a chapter image hasn't been dropped in yet — the inner img
+       inherits the radius so subpixel anti-aliasing at the corners
+       doesn't reveal the underlying brand color. */
+    .case-image {
+      width: 100%;
+      height: 100%;
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+      /* Meta has a real image, so its panel uses page paper instead of
+         the dark brand color — any tiny edge bleed blends invisibly. */
+      background: var(--bg);
+      transition: transform .25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow .25s ease;
+    }
+    .case-image[data-brand="dom-and-tom"]   { background: #f36c29; }
+    .case-image[data-brand="gemini"]        { background: #00c4ed; }
+    .case-image[data-brand="danone"]        { background: #0c5aa6; }
+    .case-image[data-brand="random-house"]  { background: #2a1a14; }
+    .case-image::before {
+      content: attr(data-brand);
+      position: absolute;
+      inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--ddc);
+      font-size: 12px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.32);
+      pointer-events: none;
+    }
+    .case-image img {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: inherit;
+    }
+
+    /* Right column — eyebrow + headline + sub + CTA, stacked. */
+    .case-text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    /* Each slide carries a brand accent color via --accent. The eyebrow,
+       CTA, and hover headline all pull from this var, so the highlights
+       in the card track the colors of the associated imagery. */
+    .car-slide                              { --accent: var(--red); }
+    .car-slide[data-accent="meta"]          { --accent: #1877F2; }
+    .car-slide[data-accent="gemini"]        { --accent: #00a8c4; }
+    .car-slide[data-accent="danone"]        { --accent: #0c5aa6; }
+    .car-slide[data-accent="dom-and-tom"]   { --accent: #ed5a1a; }
+    .car-slide[data-accent="random-house"]  { --accent: #a35535; }
+
+    .case-num {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .car-slide.is-locked .case-num { color: var(--muted); }
+    .case-headline {
+      font-family: var(--body);
+      font-weight: 700;
+      font-size: clamp(26px, 3vw, 40px);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--fg);
+      margin: 0;
+      max-width: 20ch;
+      transition: color .2s ease;
+    }
+    .case-headline em { font-style: normal; font-weight: inherit; color: inherit; }
+    .case-sub {
+      font-family: var(--body);
+      font-size: clamp(15px, 1.2vw, 17px);
+      line-height: 1.5;
+      color: var(--soft);
+      max-width: 40ch;
+      margin: 0;
+    }
+    .case-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      font-family: var(--body);
+      font-weight: 500;
+      font-style: italic;
+      font-size: 15px;
+      color: var(--accent);
+      line-height: 1;
+      transition: gap .25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .case-cta .icon { display: inline-block; }
+    a.car-slide.is-active:hover .case-cta { gap: 12px; }
+    .case-cta--locked {
+      font-style: normal;
+      color: var(--muted);
+      font-family: var(--ddc);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    /* Controls bar below the stage — prev arrow, numbered nav, next
+       arrow sit as one centered unit (not edge-pinned). */
+    .car-controls {
+      max-width: var(--max-w);
+      margin: clamp(20px, 2.4vw, 28px) auto 0;
+      padding: 18px var(--pad);
+      border-top: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(14px, 1.6vw, 22px);
+    }
+    .car-nums { display: flex; align-items: center; gap: 18px; }
+    .car-num {
+      font-family: var(--ddc);
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      color: rgba(37, 37, 37, 0.3);
+      background: transparent;
+      border: 0;
+      padding: 4px 0;
+      cursor: pointer;
+      line-height: 1;
+      transition: color .2s ease;
+    }
+    .car-num:hover { color: rgba(37, 37, 37, 0.7); }
+    .car-num.is-active { color: var(--fg); }
+    .car-mini {
+      width: 32px;
+      height: 32px;
+      border: 0;
+      background: transparent;
+      color: var(--fg);
+      cursor: pointer;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: color .15s ease, transform .15s ease;
+    }
+    .car-mini:hover { color: var(--red); transform: translateX(2px); }
+    .car-mini.car-prev:hover { transform: translateX(-2px); }
+
+    /* Mobile — drop absolute positioning so the active slide drives
+       natural section height; hide inactive slides outright. */
+    @media (max-width: 768px) {
+      .car-stage { height: auto; }
+      .car-slide {
+        position: relative;
+        inset: auto;
+        grid-template-columns: 1fr;
+        gap: 24px;
+        transform: none;
+        display: none;
+      }
+      .car-slide.is-active { display: grid; opacity: 1; transform: none; }
+      .car-slide.is-leaving { display: none; }
+      .case-image { aspect-ratio: 4 / 3; height: auto; }
+      .case-headline { max-width: 100%; }
+    }
+
+    /* Selected work — compact, two-column lists, no big titles */
+    .work__grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: clamp(24px, 3vw, 36px) clamp(28px, 4vw, 48px);
+    }
+    @media (min-width: 640px) { .work__grid { grid-template-columns: repeat(2, 1fr); } }
+    .work__group .label { display: block; margin-bottom: 8px; }
+    .work__list {
+      margin: 0; padding: 0; list-style: none;
+      font-size: 17px;
+      line-height: 1.75;
+      color: var(--fg);
+    }
+    .work__list li { font-weight: 400; }
+    .work__more {
+      margin-top: 28px;
+      font-style: italic;
+      color: var(--soft);
+      font-size: 17px;
+    }
+
+    /* ───────── I've worked with — marquee ─────────
+       Edge-to-edge auto-scrolling strip of logo cards. CSS-only; track
+       holds two identical sets and translates -50% to loop seamlessly.
+       Pauses on hover so curious cursors can read individual marks. */
+    .worked-with {
+      padding: clamp(40px, 5vw, 64px) 0 clamp(40px, 6vw, 72px);
+      border-top: 1px solid var(--rule);
+    }
+    .worked-with__head {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 var(--pad);
+      margin-bottom: clamp(20px, 2.4vw, 28px);
+    }
+    .marquee {
+      /* Horizontal clip only — vertical visible so cards can lift on
+         hover without being trimmed at the top. mask-image still
+         provides the soft entry/exit fades on the left and right. */
+      overflow-x: clip;
+      overflow-y: visible;
+      width: 100%;
+      padding: 8px 0;
+      cursor: grab;
+      -webkit-user-select: none;
+              user-select: none;
+      touch-action: pan-y;
+      -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 80px, #000 calc(100% - 80px), transparent 100%);
+              mask-image: linear-gradient(90deg, transparent 0, #000 80px, #000 calc(100% - 80px), transparent 100%);
+    }
+    .marquee.is-dragging { cursor: grabbing; }
+    .marquee__track {
+      display: flex;
+      width: max-content;
+      /* Position is set imperatively from JS. transform3d for compositor lift. */
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+    }
+    .marquee__set {
+      list-style: none;
+      margin: 0;
+      padding: 0 12px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .logo-card {
+      flex: 0 0 auto;
+      width: 168px;
+      height: 96px;
+      border-radius: var(--radius);
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 18px;
+      overflow: hidden;
+      transition: transform .2s ease;
+    }
+    .marquee:not(.is-dragging) .logo-card:hover { transform: translateY(-2px); }
+    .logo-card img {
+      /* Fill the card and scale the logo up to whatever fits — cropped
+         source images (Hearst, etc.) get more of the card, while logos
+         with native breathing room still render correctly because of
+         object-fit: contain. */
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      /* Logos are presentational — clicks/drags should pass through
+         to the marquee. Also block the browser's native image drag
+         ghost from appearing when the user grabs the strip. */
+      pointer-events: none;
+      -webkit-user-drag: none;
+              user-drag: none;
+    }
+    /* Visual size normalization — square/icon-style logos (Facebook
+       circle, Instagram glyph) would otherwise fill the full card
+       height and dwarf the wordmark logos. Cap their max-height so
+       they read at a similar visual weight to wide wordmarks. */
+    .logo-card[data-brand="facebook"]  img { max-height: 60%; }
+    .logo-card[data-brand="instagram"] img { max-height: 60%; }
+
+    /* Tile-style logos: match the card background to the logo's native
+       backdrop color so the tile blends seamlessly into the card.
+       Meta and Dom & Tom both now use wordmark-on-light JPGs, so they
+       sit on the default white card like the other wordmarks. */
+
+    @media (max-width: 720px) {
+      .logo-card { width: 138px; height: 84px; padding: 12px 14px; }
+      .marquee__set { gap: 14px; padding-right: 14px; }
+    }
+
+    /* Friends say (testimonials) — small, in the rhythm of the page */
+    .friends__grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: clamp(28px, 4vw, 44px);
+    }
+    @media (min-width: 720px) { .friends__grid { grid-template-columns: repeat(2, 1fr); } }
+    .quote { margin: 0; }
+    .quote__body {
+      margin: 0 0 14px;
+      font-size: 17px;
+      line-height: 1.65;
+      color: var(--fg);
+    }
+    .quote__body::before { content: "“"; margin-right: 1px; color: var(--soft); }
+    .quote__body::after  { content: "”"; margin-left: 1px; color: var(--soft); }
+    .quote__by .name { font-weight: 500; font-size: 15px; }
+    .quote__by .role { font-family: var(--ddc); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); display: block; margin-top: 2px; }
+
+    /* Get in touch — centered header above signoff and items.
+       Mirrors the .worked-with / .work-section / .story pattern. */
+    .touch {
+      padding: clamp(40px, 6vw, 72px) 0;
+      border-top: 1px solid var(--rule);
+    }
+    .touch__head {
+      max-width: var(--max-w);
+      margin: 0 auto clamp(28px, 4vw, 40px);
+      padding: 0 var(--pad);
+    }
+    .touch__body {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 var(--pad);
+      text-align: center;
+    }
+    .touch__signoff {
+      margin: 0 auto clamp(32px, 4vw, 48px);
+      font-style: italic;
+      color: var(--soft);
+      font-size: clamp(17px, 1.4vw, 19px);
+      line-height: 1.5;
+      max-width: 56ch;
+    }
+    .touch__items {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: clamp(20px, 2.4vw, 28px);
+      max-width: 480px;
+      margin: 0 auto;
+      text-align: left;          /* labels and addresses read left-aligned */
+    }
+    @media (min-width: 720px) {
+      .touch__items { grid-template-columns: repeat(2, 1fr); }
+    }
+    .touch__items .label { display: block; margin-bottom: 8px; }
+    .touch__items a {
+      font-size: clamp(17px, 1.4vw, 19px);
+      font-weight: 500;
+      color: var(--fg);
+      text-decoration: none;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 2px;
+      transition: border-color .15s ease, color .15s ease;
+    }
+    .touch__items a:hover { color: var(--red); border-bottom-color: var(--red); }
+
+    /* Footer */
+    .foot {
+      border-top: 1px solid var(--rule);
+      padding: 24px var(--pad) 36px;
+      max-width: var(--max-w);
+      margin: 0 auto;
+    }
+    .foot__row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-family: var(--body);
+      font-weight: 400;
+      font-size: 14px;
+      letter-spacing: -0.005em;
+      color: var(--muted);
+    }
+    .foot__row a {
+      color: var(--soft);
+      text-decoration: none;
+      transition: color .15s ease;
+    }
+    .foot__row a:hover { color: var(--red); }
+    .foot__row a .heart { color: var(--red); }
+
+    /* ───────── Halloween easter egg ─────────
+       Pumpkin button surfaces when the visitor types "boo" anywhere
+       on the page. Bottom-right corner, gentle wobble, click opens
+       a random Halloween short. */
+    #pumpkin-egg {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 100;
+      background: #16111c;
+      color: #ffb547;
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 20px 12px 16px;
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: 14px;
+      letter-spacing: -0.005em;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(20, 10, 0, 0.28), 0 2px 6px rgba(0,0,0,0.18);
+      animation: pumpkin-in 380ms cubic-bezier(0.2, 0.9, 0.2, 1);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    #pumpkin-egg:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 38px rgba(20, 10, 0, 0.32), 0 2px 6px rgba(0,0,0,0.18);
+    }
+    #pumpkin-egg .pumpkin {
+      font-size: 22px;
+      display: inline-block;
+      transform-origin: 50% 80%;
+      animation: pumpkin-wobble 1.6s ease-in-out infinite;
+    }
+    #pumpkin-egg .arrow { color: rgba(255, 181, 71, 0.7); }
+    #pumpkin-egg.pumpkin-egg--leaving {
+      opacity: 0;
+      transform: translateY(20px) scale(0.6);
+      transition: all 360ms ease;
+      pointer-events: none;
+    }
+    @keyframes pumpkin-in {
+      from { transform: translateY(28px) scale(0.6); opacity: 0; }
+      to   { transform: translateY(0)    scale(1);   opacity: 1; }
+    }
+    @keyframes pumpkin-wobble {
+      0%, 100% { transform: rotate(-7deg); }
+      50%      { transform: rotate(7deg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #pumpkin-egg, #pumpkin-egg .pumpkin { animation: none; }
+    }
+
+    /* A11y */
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--red);
+      outline-offset: 3px;
+    }
+
+    /* Small screen polish */
+    @media (max-width: 640px) {
+      body { font-size: 17px; }
+      .site-nav__links a:nth-child(2) { display: none; }
+      .prose p { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="site-nav" id="nav" aria-label="Primary">
+    <div class="site-nav__row">
+      <a href="https://snacksdesign.com" target="_blank" rel="noopener" class="logo" aria-label="SNACKS home">SNACKS</a>
+      <div class="site-nav__links">
+        <a href="#work">Work</a>
+        <a href="https://www.linkedin.com/in/ppetrowsky" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="#contact">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Subtle page frame: 10px rules along the top (just below the nav)
+       and the left/right viewport edges. One element with three
+       borders so corners join cleanly. Decorative only. -->
+  <div class="frame" aria-hidden="true"></div>
+
+  <main id="top">
+
+    <!-- HERO: circular portrait + name as masthead -->
+    <section class="hero" aria-labelledby="intro-title">
+      <figure class="portrait portrait--round" id="portrait">
+        <button class="portrait__flipper" type="button"
+                aria-label="Flip the photo">
+          <span class="portrait__face portrait__face--front">
+            <img src="/images/portrait.jpg" alt="Portrait of Paul Petrowsky" loading="eager" decoding="async" draggable="false">
+          </span>
+          <span class="portrait__face portrait__face--back" aria-hidden="true">
+            <img src="/images/portrait-back.jpg" alt="" loading="lazy" decoding="async" draggable="false">
+          </span>
+        </button>
+      </figure>
+
+      <div class="intro intro--name">
+        <h1 class="intro__name" id="intro-title">
+          <span>Paul</span>
+          <span>Petrowsky</span>
+        </h1>
+        <p class="intro__tag">
+          I'm a principal product designer at <a href="https://www.meta.com/" target="_blank" rel="noopener">Meta</a>, based in Chicago. Working on strengthening people's ability to <a href="https://about.fb.com/news/2025/12/making-it-easier-to-access-account-support-on-facebook-and-instagram/" target="_blank" rel="noopener">remediate issues across Instagram, Facebook, and Business tools</a>.
+        </p>
+      </div>
+    </section>
+
+    <!-- STORY: continuous narrative -->
+    <section class="story" aria-labelledby="story-title">
+      <div class="story__head">
+        <h2 class="label" id="story-title">A little about me</h2>
+      </div>
+      <div class="story__inner prose">
+
+        <p>
+          My work at <strong>Meta</strong> lives inside Central Integrity &amp; Support — the team responsible for what happens when someone reports a problem, asks for help, or gets stuck. Almost five years in, the work started as flow design and has slowly turned into something bigger.
+        </p>
+
+        <p class="pull">
+          These days I'm not designing flows — I'm designing the system that designs the flows.
+        </p>
+
+        <p>
+          Outside of Meta, I co-founded <strong><a href="https://snacksdesign.com" target="_blank" rel="noopener">SNACKS</a></strong>, a digital product studio I run with David Bean. SNACKS is where I get to work with founders directly — strategy, design, and engineering for ventures that need a senior team without a 50-person agency. It's active, profitable, and quietly one of the things I'm proudest of.
+        </p>
+
+        <p>
+          Before Meta and SNACKS, I spent nearly a decade at <strong>Dom &amp; Tom</strong> — starting as their first design hire in 2010 and ending as Chief Design Officer, leading an 18-person practice across product, brand, and platform work for clients like <a href="https://www.hmhco.com" target="_blank" rel="noopener">Houghton Mifflin Harcourt</a>, <a href="https://www.chase.com" target="_blank" rel="noopener">JPMorgan Chase</a>, <a href="https://www.bloomberg.com" target="_blank" rel="noopener">Bloomberg</a>, <a href="https://www.tysonfoods.com" target="_blank" rel="noopener">Tyson Foods</a>, <a href="https://www.nbcuniversal.com" target="_blank" rel="noopener">NBC Universal</a>, and the <a href="https://www.alz.org" target="_blank" rel="noopener">Alzheimer's Association</a>.
+        </p>
+
+        <p>
+          And before that, I was in <strong>book publishing</strong> — five-plus years at Triumph Books, a Random House imprint, designing covers and interiors for what eventually added up to a few hundred titles. That stretch is where my typography habits and respect for editorial pacing come from. I never really left it behind.
+        </p>
+
+        <p>
+          <strong>Twenty years in design, from book covers to platform architecture.</strong> I'm a fan of multi-brand systems, support-shaped problems, and dad jokes.
+        </p>
+      </div>
+    </section>
+
+    <!-- I'VE WORKED WITH — auto-scrolling logo marquee -->
+    <section class="worked-with" aria-labelledby="worked-with-title">
+      <div class="worked-with__head">
+        <h2 class="label" id="worked-with-title">I've worked with</h2>
+      </div>
+      <!-- Two identical sets in the track; track translates -50% over the
+           full duration so the loop is seamless. The duplicate set is
+           aria-hidden to avoid double announcement. -->
+      <div class="marquee" aria-hidden="false">
+        <div class="marquee__track">
+          <ul class="marquee__set">
+            <li class="logo-card" data-brand="meta"><img src="/logos/meta.png" alt="Meta" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="facebook"><img src="/logos/facebook.png" alt="Facebook" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="instagram"><img src="/logos/instagram.png" alt="Instagram" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="chase"><img src="/logos/chase.jpg" alt="JPMorgan Chase" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="dom-and-tom"><img src="/logos/dom-and-tom.jpg" alt="Dom &amp; Tom" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="hearst"><img src="/logos/hearst.png" alt="Hearst" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="hmh"><img src="/logos/hmh.jpg" alt="Houghton Mifflin Harcourt" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="danone"><img src="/logos/danone.jpg" alt="Danone" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="argonne"><img src="/logos/argonne.png" alt="Argonne National Laboratory" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="gemini"><img src="/logos/gemini.jpg" alt="Gemini" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="aar"><img src="/logos/aar.png" alt="AAR" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="benchmark"><img src="/logos/benchmark.png" alt="Benchmark Analytics" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="summer-friday"><img src="/logos/summer-friday.png" alt="Summer Friday" loading="lazy" draggable="false"></li>
+          </ul>
+          <ul class="marquee__set" aria-hidden="true">
+            <li class="logo-card" data-brand="meta"><img src="/logos/meta.png" alt="" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="facebook"><img src="/logos/facebook.png" alt="" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="instagram"><img src="/logos/instagram.png" alt="" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="chase"><img src="/logos/chase.jpg" alt="" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="dom-and-tom"><img src="/logos/dom-and-tom.jpg" alt="" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="hearst"><img src="/logos/hearst.png" alt="" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="hmh"><img src="/logos/hmh.jpg" alt="" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="danone"><img src="/logos/danone.jpg" alt="" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="argonne"><img src="/logos/argonne.png" alt="" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="gemini"><img src="/logos/gemini.jpg" alt="" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="aar"><img src="/logos/aar.png" alt="" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="benchmark"><img src="/logos/benchmark.png" alt="" loading="lazy" draggable="false"></li>
+            <li class="logo-card" data-brand="summer-friday"><img src="/logos/summer-friday.png" alt="" loading="lazy" draggable="false"></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORK — carousel of case studies. Each slide links to its case
+         study page; all are gated behind a single shared password,
+         signaled by the lock icon in the CTA. The /work page hosts the
+         full chronological list view. -->
+    <section class="chapters" id="work" aria-labelledby="work-title">
+      <div class="chapters__head">
+        <h2 class="label" id="work-title">Work</h2>
+        <p class="chapters__lede">
+          Five case studies, all gated. Click any one to request the password.
+        </p>
+      </div>
+
+      <div class="carousel" id="workCarousel">
+        <button class="car-arrow car-arrow--prev car-prev" type="button" aria-label="Previous case study">
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M10 4 6 8l4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="car-arrow car-arrow--next car-next" type="button" aria-label="Next case study">
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="car-stage">
+
+          <!-- Slide 1 — Meta (most recent) -->
+          <a class="car-slide is-active" data-index="0" data-accent="meta" href="/work/meta" aria-label="Architecting Meta's Support — password protected" draggable="false">
+            <div class="case-image" data-brand="meta">
+              <img src="/images/chapters/01-meta.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
+            </div>
+            <div class="case-text">
+              <span class="case-num">2021 – Present</span>
+              <h3 class="case-headline">Architecting Meta's <em>Support.</em></h3>
+              <p class="case-sub">Almost five years inside Meta's support stack — from individual resolution flows to the AI assistant rolling out to billions. The work is equal parts product design and system architecture, across the largest social platforms in the world.</p>
+              <span class="case-cta">
+                <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
+                  <rect x="2" y="6" width="9" height="7" rx="0.8" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                  <path d="M4 6V3.5a2.5 2.5 0 1 1 5 0V6" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                </svg>
+                Read the chapter
+                <svg class="icon-arrow" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"/>
+                </svg>
+              </span>
+            </div>
+          </a>
+
+          <!-- Slide 2 — Gemini Mobile -->
+          <a class="car-slide" data-index="1" data-accent="gemini" href="/work/gemini-mobile" aria-label="Dawn of Gemini Mobile — password protected" draggable="false">
+            <div class="case-image" data-brand="gemini">
+              <img src="/images/chapters/03-gemini-mobile.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
+            </div>
+            <div class="case-text">
+              <span class="case-num">~2017 · Dom &amp; Tom era</span>
+              <h3 class="case-headline">Dawn of <em>Gemini Mobile.</em></h3>
+              <p class="case-sub">A React Native mobile exchange for the crypto revolution — built fast, shipped at scale. Took an early-stage exchange from web-only to a mobile app trusted by traders through one of the wildest stretches in crypto.</p>
+              <span class="case-cta">
+                <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
+                  <rect x="2" y="6" width="9" height="7" rx="0.8" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                  <path d="M4 6V3.5a2.5 2.5 0 1 1 5 0V6" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                </svg>
+                Read the chapter
+                <svg class="icon-arrow" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"/>
+                </svg>
+              </span>
+            </div>
+          </a>
+
+          <!-- Slide 3 — Danone -->
+          <a class="car-slide" data-index="2" data-accent="danone" href="/work/danone" aria-label="Danone Tests a New Market — password protected" draggable="false">
+            <div class="case-image" data-brand="danone">
+              <img src="/images/chapters/04-danone.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
+            </div>
+            <div class="case-text">
+              <span class="case-num">~2015 · Dom &amp; Tom era</span>
+              <h3 class="case-headline">Danone <em>Tests a New Market.</em></h3>
+              <p class="case-sub">How a design team learned to empathize across cultures, categories, and consumers. The brief looked like packaging research; the deeper job was teaching the team to listen before designing.</p>
+              <span class="case-cta">
+                <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
+                  <rect x="2" y="6" width="9" height="7" rx="0.8" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                  <path d="M4 6V3.5a2.5 2.5 0 1 1 5 0V6" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                </svg>
+                Read the chapter
+                <svg class="icon-arrow" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"/>
+                </svg>
+              </span>
+            </div>
+          </a>
+
+          <!-- Slide 4 — Dom & Tom -->
+          <a class="car-slide" data-index="3" data-accent="dom-and-tom" href="/work/dom-and-tom" aria-label="Dom & Tom — A Giant Ball of Clay — password protected" draggable="false">
+            <div class="case-image" data-brand="dom-and-tom">
+              <img src="/images/chapters/02-dom-tom.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
+            </div>
+            <div class="case-text">
+              <span class="case-num">2010 – 2019</span>
+              <h3 class="case-headline">Dom &amp; Tom — A Giant Ball of <em>Clay.</em></h3>
+              <p class="case-sub">Molding a digital product agency from first design hire to an 18-person practice. Nine years, four titles, dozens of clients, and the design culture that scaled alongside the business.</p>
+              <span class="case-cta">
+                <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
+                  <rect x="2" y="6" width="9" height="7" rx="0.8" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                  <path d="M4 6V3.5a2.5 2.5 0 1 1 5 0V6" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                </svg>
+                Read the chapter
+                <svg class="icon-arrow" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"/>
+                </svg>
+              </span>
+            </div>
+          </a>
+
+          <!-- Slide 5 — Random House -->
+          <a class="car-slide" data-index="4" data-accent="random-house" href="/work/random-house" aria-label="Random House — Covers & Interiors — password protected" draggable="false">
+            <div class="case-image" data-brand="random-house">
+              <img src="/images/chapters/05-random-house.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
+            </div>
+            <div class="case-text">
+              <span class="case-num">2005 – 2010 · Triumph Books / Random House</span>
+              <h3 class="case-headline">Random House — <em>Covers &amp; Interiors.</em></h3>
+              <p class="case-sub">Five-plus years designing book covers and interiors at Triumph Books, a Random House imprint. Where the typography habits — the pacing, the hierarchy, the respect for the page — started.</p>
+              <span class="case-cta">
+                <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
+                  <rect x="2" y="6" width="9" height="7" rx="0.8" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                  <path d="M4 6V3.5a2.5 2.5 0 1 1 5 0V6" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                </svg>
+                Read the chapter
+                <svg class="icon-arrow" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"/>
+                </svg>
+              </span>
+            </div>
+          </a>
+
+        </div>
+      </div>
+
+      <div class="car-controls">
+        <div class="car-nums">
+          <button class="car-num is-active" type="button" aria-label="Case study 1" data-go="0">01</button>
+          <button class="car-num" type="button" aria-label="Case study 2" data-go="1">02</button>
+          <button class="car-num" type="button" aria-label="Case study 3" data-go="2">03</button>
+          <button class="car-num" type="button" aria-label="Case study 4" data-go="3">04</button>
+          <button class="car-num" type="button" aria-label="Case study 5" data-go="4">05</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="touch" id="contact" aria-labelledby="contact-title">
+      <div class="touch__head">
+        <h2 class="label" id="contact-title">Get in touch</h2>
+      </div>
+      <div class="touch__body">
+        <p class="touch__signoff">
+          Thanks for stopping by. If you're hiring, building, or just want to talk about support-shaped problems — I'd love to hear from you.
+        </p>
+        <div class="touch__items">
+          <div>
+            <span class="label">Email</span>
+            <a href="mailto:paul@snacksdesign.com">paul@snacksdesign.com</a>
+          </div>
+          <div>
+            <span class="label">LinkedIn</span>
+            <a href="https://www.linkedin.com/in/ppetrowsky" target="_blank" rel="noopener">linkedin.com/in/ppetrowsky</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot__row">
+      <a href="https://snacksdesign.com/" target="_blank" rel="noopener">Made with <span class="heart" aria-hidden="true">&hearts;</span> love in Chicago</a>
+      <span>Make. Progress. Work the problem.</span>
+    </div>
+  </footer>
+
+  <script>
+    /* ───────── Chapters carousel ─────────
+       Adapted from snacksdesign.com — numbered nav doubles as slide
+       indicator + click target, prev/next arrows, ArrowLeft/Right keys
+       when the carousel is in view, and 50px touch-swipe threshold. */
+    (function initChaptersCarousel() {
+      var carousel = document.getElementById('workCarousel');
+      if (!carousel) return;
+      var slides = Array.from(carousel.querySelectorAll('.car-slide'));
+      var section = carousel.closest('section');
+      var prevBtn = section.querySelector('.car-prev');
+      var nextBtn = section.querySelector('.car-next');
+      var nums = Array.from(section.querySelectorAll('.car-num'));
+      var current = 0;
+
+      function goTo(idx) {
+        idx = (idx + slides.length) % slides.length;
+        if (idx === current) return;
+        var leaving = slides[current];
+        var arriving = slides[idx];
+        leaving.classList.add('is-leaving');
+        leaving.classList.remove('is-active');
+        arriving.classList.remove('is-leaving');
+        arriving.classList.add('is-active');
+        setTimeout(function () { leaving.classList.remove('is-leaving'); }, 450);
+        nums.forEach(function (n, i) { n.classList.toggle('is-active', i === idx); });
+        current = idx;
+      }
+
+      if (prevBtn) prevBtn.addEventListener('click', function () { goTo(current - 1); });
+      if (nextBtn) nextBtn.addEventListener('click', function () { goTo(current + 1); });
+      nums.forEach(function (n) {
+        n.addEventListener('click', function () { goTo(parseInt(n.dataset.go, 10)); });
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.target && e.target.matches && e.target.matches('input, textarea, [contenteditable]')) return;
+        var rect = carousel.getBoundingClientRect();
+        var inView = rect.top < window.innerHeight && rect.bottom > 0;
+        if (!inView) return;
+        if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current + 1); }
+        if (e.key === 'ArrowLeft')  { e.preventDefault(); goTo(current - 1); }
+      });
+
+      /* Drag-to-navigate via pointer events — works for mouse + touch.
+         setPointerCapture keeps pointermove/up firing on the carousel
+         even when the cursor leaves its bounds (fixes desktop "stuck"
+         when you drag past the edge). Commit on either:
+           — distance: |dx| > SWIPE_THRESHOLD_PX, OR
+           — velocity: a quick flick that releases with |vx| > FLING_THRESHOLD_PX_S
+         Playful tilt during drag: card translates with the finger (damped)
+         and rotates slightly so the trailing edge lifts. */
+      var dragStartX  = null;
+      var dragMoved   = false;
+      var activeId    = null;             // pointerId we captured
+      var moveBuf     = [];               // {t, x} samples for velocity
+      var VEL_BUF_MS  = 120;
+
+      var DRAG_MOVED_PX        = 8;
+      var SWIPE_THRESHOLD_PX   = 50;
+      var FLING_THRESHOLD_PX_S = 350;     // a deliberate flick (px / sec)
+      var DRAG_FOLLOW          = 0.35;
+      var DRAG_ROTATE          = 0.02;    // deg per px (~2° at 100px)
+      var MAX_ROTATE_DEG       = 4;
+
+      function pushSample(t, x) {
+        moveBuf.push({ t: t, x: x });
+        var cutoff = t - VEL_BUF_MS;
+        while (moveBuf.length && moveBuf[0].t < cutoff) moveBuf.shift();
+      }
+      function releaseVelocity() {
+        if (moveBuf.length < 2) return 0;
+        var a = moveBuf[0], b = moveBuf[moveBuf.length - 1];
+        var dt = (b.t - a.t) / 1000;
+        if (dt < 0.008) return 0;
+        return (b.x - a.x) / dt;
+      }
+
+      function setDragTransform(slide, dx) {
+        var rot = Math.max(-MAX_ROTATE_DEG, Math.min(MAX_ROTATE_DEG, dx * DRAG_ROTATE));
+        slide.style.transition = 'none';
+        slide.style.transform  = 'translateX(' + (dx * DRAG_FOLLOW) + 'px) rotate(' + rot + 'deg)';
+      }
+      function clearDragTransform(slide) {
+        slide.style.transition = '';
+        slide.style.transform  = '';
+      }
+
+      carousel.addEventListener('pointerdown', function (e) {
+        if (e.button !== undefined && e.button !== 0) return;
+        dragStartX = e.clientX;
+        dragMoved  = false;
+        activeId   = e.pointerId;
+        moveBuf.length = 0;
+        pushSample(performance.now(), e.clientX);
+        // NB: we do not capture the pointer here — capture is deferred
+        // until a real drag is detected (pointermove past threshold) so
+        // that simple clicks on the arrow buttons and slide links route
+        // to their original targets instead of the carousel.
+      });
+      carousel.addEventListener('pointermove', function (e) {
+        if (dragStartX === null) return;
+        var dx = e.clientX - dragStartX;
+        if (Math.abs(dx) > DRAG_MOVED_PX) {
+          if (!dragMoved) {
+            // Real drag confirmed — capture the pointer so the gesture
+            // can leave the carousel bounds without losing events.
+            try { carousel.setPointerCapture(activeId); } catch (_) {}
+          }
+          dragMoved = true;
+        }
+        pushSample(performance.now(), e.clientX);
+        if (!dragMoved) return;
+        setDragTransform(slides[current], dx);
+      });
+      function endPointerSwipe(e) {
+        if (dragStartX === null) return;
+        var dx = e.clientX - dragStartX;
+        var vx = releaseVelocity();
+        dragStartX = null;
+        try { carousel.releasePointerCapture(activeId); } catch (_) {}
+        activeId = null;
+
+        var activeSlide = slides[current];
+        clearDragTransform(activeSlide);
+
+        var committed = false;
+        if (Math.abs(dx) > SWIPE_THRESHOLD_PX) {
+          goTo(current + (dx < 0 ? 1 : -1));
+          committed = true;
+        } else if (Math.abs(vx) > FLING_THRESHOLD_PX_S) {
+          // Fling: small displacement but quick release — direction follows vx
+          goTo(current + (vx < 0 ? 1 : -1));
+          committed = true;
+        }
+        // (else: spring back via the cleared transition)
+        void committed;
+      }
+      carousel.addEventListener('pointerup', endPointerSwipe);
+      carousel.addEventListener('pointercancel', function (e) {
+        if (dragStartX !== null) clearDragTransform(slides[current]);
+        dragStartX = null;
+        try { carousel.releasePointerCapture(activeId); } catch (_) {}
+        activeId = null;
+      });
+      carousel.addEventListener('lostpointercapture', function () {
+        if (dragStartX !== null) clearDragTransform(slides[current]);
+        dragStartX = null;
+        activeId = null;
+      });
+
+      // Block the browser's native link-drag so our pointer events
+      // can fully own the swipe gesture across the slide anchors.
+      carousel.addEventListener('dragstart', function (e) { e.preventDefault(); });
+
+      /* If the pointer move crossed the "is a drag" threshold, suppress
+         the click event on the slide link so a swipe doesn't navigate
+         to the case-study page. Uses capture phase to intercept first. */
+      carousel.addEventListener('click', function (e) {
+        if (dragMoved) {
+          e.preventDefault();
+          e.stopPropagation();
+          dragMoved = false;
+        }
+      }, true);
+    })();
+  </script>
+
+  <script>
+    /* ───────── Portrait flip card ─────────
+       Front: moody Purple Rain portrait. Back: candid at SNACKS.
+       Click to flip, or drag horizontally to peek and let it snap to
+       the nearest face on release. Pointer events handle both mouse
+       and touch, with pointer capture so a drag started on the card
+       follows the finger out and back. */
+    (function initPortraitFlip() {
+      var portrait = document.getElementById('portrait');
+      if (!portrait) return;
+      var flipper = portrait.querySelector('.portrait__flipper');
+      if (!flipper) return;
+
+      var baseAngle = 0;           // 0 = front, 180 = back
+      var dragging  = false;
+      var startX    = 0;
+      var dx        = 0;
+      var moved     = false;
+      var DRAG_THRESHOLD = 6;      // px before we treat it as a drag
+      var FLIP_THRESHOLD = 0.25;   // fraction of width to commit a flip
+
+      function setLiveAngle(angle) {
+        flipper.style.transform = 'rotateY(' + angle + 'deg)';
+      }
+      function clearLiveTransform() {
+        flipper.style.transform = '';
+      }
+      function setFace(face) {
+        baseAngle = face === 'back' ? 180 : 0;
+        portrait.classList.toggle('is-flipped', face === 'back');
+      }
+      function toggleFace() {
+        setFace(baseAngle === 0 ? 'back' : 'front');
+      }
+
+      // Click flips. The pointerup handler resets `moved`; if a drag
+      // happened, we suppress the click (drag committed or reverted).
+      flipper.addEventListener('click', function (e) {
+        if (moved) { moved = false; return; }
+        clearLiveTransform();
+        toggleFace();
+      });
+
+      flipper.addEventListener('pointerdown', function (e) {
+        if (e.button !== undefined && e.button !== 0) return;
+        dragging = true;
+        moved    = false;
+        startX   = e.clientX;
+        dx       = 0;
+        portrait.classList.add('is-dragging');
+        try { flipper.setPointerCapture(e.pointerId); } catch (_) {}
+      });
+
+      flipper.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        dx = e.clientX - startX;
+        if (Math.abs(dx) > DRAG_THRESHOLD) moved = true;
+        if (!moved) return;
+        var width = flipper.offsetWidth || 1;
+        var liveAngle = baseAngle + (dx / width) * 180;
+        setLiveAngle(liveAngle);
+      });
+
+      function endDrag(e) {
+        if (!dragging) return;
+        dragging = false;
+        portrait.classList.remove('is-dragging');
+        try { flipper.releasePointerCapture(e.pointerId); } catch (_) {}
+        if (!moved) return;
+        // Decide: did the user cross the flip threshold?
+        var width = flipper.offsetWidth || 1;
+        var ratio = Math.abs(dx) / width;
+        clearLiveTransform();
+        if (ratio >= FLIP_THRESHOLD) {
+          toggleFace();
+        }
+        // Suppress the synthetic click that follows pointerup on
+        // platforms that fire one — the toggle (or revert) is already done.
+        setTimeout(function () { moved = false; }, 0);
+      }
+      flipper.addEventListener('pointerup', endDrag);
+      flipper.addEventListener('pointercancel', endDrag);
+      flipper.addEventListener('lostpointercapture', endDrag);
+      // Block the browser's native image drag ghost.
+      flipper.addEventListener('dragstart', function (e) { e.preventDefault(); });
+    })();
+  </script>
+
+  <script>
+    /* ───────── Halloween easter egg ─────────
+       Type "boo" anywhere on the page and a pumpkin button slides up
+       from the bottom-right with a link to one of Paul's annual
+       Halloween shorts (picked at random). Hint planted in console
+       so developers poking around can find it. */
+    (function halloweenEgg() {
+      var TARGET = 'boo';
+      var BUFFER_MAX = 6;
+      var SHORTS = [
+        'https://www.youtube.com/shorts/7HE8RArzLe8',
+        'https://www.youtube.com/shorts/1rl0RdDjtLk'
+      ];
+      var buf = '';
+
+      // Quiet, designer-friendly console invitation
+      try {
+        console.log(
+          '%c🎃%c  psst — try typing %c"boo"%c on this page',
+          'font-size:22px',
+          'font:14px ui-sans-serif, system-ui; color:#444',
+          'font:600 14px ui-monospace, monospace; color:#E73F3E',
+          'font:14px ui-sans-serif, system-ui; color:#444'
+        );
+      } catch (_) {}
+
+      document.addEventListener('keydown', function (e) {
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        var t = e.target;
+        if (t && t.matches && t.matches('input, textarea, [contenteditable], [contenteditable="true"]')) return;
+        var k = (e.key || '').toLowerCase();
+        if (k.length !== 1 || k < 'a' || k > 'z') return;
+        buf = (buf + k).slice(-BUFFER_MAX);
+        if (buf.endsWith(TARGET)) {
+          buf = '';
+          showPumpkin();
+        }
+      });
+
+      function showPumpkin() {
+        if (document.getElementById('pumpkin-egg')) return;
+        var btn = document.createElement('button');
+        btn.id = 'pumpkin-egg';
+        btn.type = 'button';
+        btn.setAttribute('aria-label', "Watch Paul's annual Halloween display");
+        btn.innerHTML =
+          '<span class="pumpkin" aria-hidden="true">🎃</span>' +
+          '<span>See the show</span>' +
+          '<span class="arrow" aria-hidden="true">→</span>';
+        var dismissed = false;
+        function dismiss() {
+          if (dismissed) return;
+          dismissed = true;
+          btn.classList.add('pumpkin-egg--leaving');
+          setTimeout(function () { if (btn.parentNode) btn.parentNode.removeChild(btn); }, 380);
+        }
+        btn.addEventListener('click', function () {
+          var url = SHORTS[Math.floor(Math.random() * SHORTS.length)];
+          window.open(url, '_blank', 'noopener');
+          dismiss();
+        });
+        document.body.appendChild(btn);
+        // Auto-dismiss if ignored for 12 seconds
+        setTimeout(dismiss, 12000);
+      }
+    })();
+  </script>
+
+  <script>
+    /* Keep --nav-h in sync with the actual rendered nav height so the
+       fixed page frame's top border always sits flush with the nav's
+       bottom edge. Runs once at boot and on every resize. */
+    (function syncNavHeight() {
+      var nav = document.querySelector('.site-nav');
+      if (!nav) return;
+      function set() {
+        var h = nav.getBoundingClientRect().height;
+        document.documentElement.style.setProperty('--nav-h', h + 'px');
+      }
+      set();
+      window.addEventListener('load', set);
+      window.addEventListener('resize', set);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(set);
+    })();
+  </script>
+
+  <script>
+    /* ───────── Marquee: auto-loop + drag-to-pan + fling ─────────
+       The track holds two identical sets of logo cards. A single rAF
+       loop drives `offset`, normalizes it to a seamless wrap, and
+       applies a translate3d. The loop has three states:
+
+         1. AUTO       — slow leftward drift at AUTO_SPEED_PX_S
+         2. DRAGGING   — offset follows the pointer delta
+         3. MOMENTUM   — release velocity carries the track until it
+                         decays below MOMENTUM_MIN_PX_S, then idles
+                         back to AUTO after IDLE_RESUME_MS
+
+       Velocity is measured from a short rolling buffer of the last
+       ~120ms of pointer moves, so a quick flick = high vx, a slow
+       drag-and-stop = low vx (no fling, immediate idle). */
+    (function initMarquee() {
+      var marquee = document.querySelector('.marquee');
+      if (!marquee) return;
+      var track = marquee.querySelector('.marquee__track');
+      var firstSet = track.querySelector('.marquee__set');
+      if (!track || !firstSet) return;
+
+      var offset = 0;
+      var setWidth = 0;
+      var dragging = false;
+      var dragStartX = 0;
+      var dragStartOffset = 0;
+
+      // Velocity tracking for fling
+      var moveBuf = [];                 // ring buffer: { t, x }
+      var VEL_BUF_WINDOW_MS = 120;
+
+      // Momentum state
+      var momentumVx = 0;               // px/sec, can be ± direction
+      var inMomentum = false;
+      var FLING_THRESHOLD_PX_S = 80;    // below this, release = no fling
+      var MOMENTUM_MIN_PX_S = 28;       // stop momentum below this
+      var FLING_DECAY_60HZ = 0.94;      // per-frame multiplier at 60fps
+
+      var lastUserActivityT = -Infinity;
+      var lastTickT = performance.now();
+
+      var AUTO_SPEED_PX_S = 36;
+      var IDLE_RESUME_MS = 1400;
+      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function measure() {
+        setWidth = firstSet.scrollWidth;
+      }
+
+      function apply() {
+        if (setWidth > 0) {
+          if (offset <= -setWidth) offset += setWidth;
+          else if (offset > 0)     offset -= setWidth;
+        }
+        track.style.transform = 'translate3d(' + offset + 'px, 0, 0)';
+      }
+
+      function pushVelocitySample(t, x) {
+        moveBuf.push({ t: t, x: x });
+        var cutoff = t - VEL_BUF_WINDOW_MS;
+        while (moveBuf.length > 0 && moveBuf[0].t < cutoff) moveBuf.shift();
+      }
+
+      function releaseVelocity() {
+        if (moveBuf.length < 2) return 0;
+        var a = moveBuf[0];
+        var b = moveBuf[moveBuf.length - 1];
+        var dt = (b.t - a.t) / 1000;
+        if (dt < 0.008) return 0;        // too short a sample, untrustworthy
+        return (b.x - a.x) / dt;          // px/sec, signed
+      }
+
+      function tick(now) {
+        var dt = Math.min(64, now - lastTickT) / 1000;
+        lastTickT = now;
+        var idleEnough = (now - lastUserActivityT) > IDLE_RESUME_MS;
+
+        if (dragging) {
+          // pointermove already wrote offset; nothing to advance here
+        } else if (inMomentum && setWidth > 0) {
+          offset += momentumVx * dt;
+          apply();
+          // Frame-rate-independent decay: equivalent to multiplying by
+          // FLING_DECAY_60HZ once per 60fps frame regardless of dt.
+          momentumVx *= Math.pow(FLING_DECAY_60HZ, dt * 60);
+          if (Math.abs(momentumVx) < MOMENTUM_MIN_PX_S) {
+            inMomentum = false;
+            momentumVx = 0;
+            lastUserActivityT = now;     // start idle window
+          }
+        } else if (idleEnough && setWidth > 0 && !reduceMotion) {
+          offset -= AUTO_SPEED_PX_S * dt;
+          apply();
+        }
+        requestAnimationFrame(tick);
+      }
+
+      marquee.addEventListener('pointerdown', function (e) {
+        if (e.button !== undefined && e.button !== 0) return;
+        dragging = true;
+        inMomentum = false;              // cancel any in-flight fling
+        momentumVx = 0;
+        dragStartX = e.clientX;
+        dragStartOffset = offset;
+        moveBuf.length = 0;
+        pushVelocitySample(performance.now(), e.clientX);
+        lastUserActivityT = performance.now();
+        marquee.classList.add('is-dragging');
+        if (marquee.setPointerCapture) {
+          try { marquee.setPointerCapture(e.pointerId); } catch (_) {}
+        }
+      });
+
+      marquee.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        offset = dragStartOffset + (e.clientX - dragStartX);
+        apply();
+        pushVelocitySample(performance.now(), e.clientX);
+        lastUserActivityT = performance.now();
+      });
+
+      function endDrag(e) {
+        if (!dragging) return;
+        dragging = false;
+        marquee.classList.remove('is-dragging');
+        if (marquee.releasePointerCapture && e && e.pointerId !== undefined) {
+          try { marquee.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
+
+        // If the release carries meaningful velocity, hand off to momentum.
+        var vx = releaseVelocity();
+        if (Math.abs(vx) >= FLING_THRESHOLD_PX_S) {
+          momentumVx = vx;
+          inMomentum = true;
+        } else {
+          inMomentum = false;
+          momentumVx = 0;
+          lastUserActivityT = performance.now();
+        }
+        lastTickT = performance.now();
+      }
+      marquee.addEventListener('pointerup', endDrag);
+      marquee.addEventListener('pointercancel', endDrag);
+      marquee.addEventListener('lostpointercapture', endDrag);
+
+      marquee.addEventListener('dragstart', function (e) { e.preventDefault(); });
+
+      measure();
+      window.addEventListener('load', measure);
+      window.addEventListener('resize', measure);
+
+      requestAnimationFrame(function (t) { lastTickT = t; tick(t); });
+    })();
+  </script>
+
+</body>
+</html>

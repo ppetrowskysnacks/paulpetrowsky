@@ -1,0 +1,23 @@
+node_modules
+.DS_Store
+.netlify
+.cache
+.env
+
+# Large source files backed up locally (web-optimized versions are committed).
+images/portrait-original-*.jpg
+images/portrait-original-*.jpeg
+images/portrait-back-original.*
+images/meta-support-hub-original.gif
+logos/Meta_lockup_*.png
+logos/meta-lockup-*-original.png
+logos/facebook-original.png
+logos/instagram-original.png
+logos/gemini-original.jpg
+logos/dom-and-tom-orange-tile.png
+logos/meta-old-positive.png
+logos/meta-positive-color.png
+logos/meta-negative.png
+
+# Earlier display-style V1 home page kept for reference, not deployed.
+index.v1-display.html
