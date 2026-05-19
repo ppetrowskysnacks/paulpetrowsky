@@ -7,6 +7,20 @@
   to = "/work.html"
   status = 200
 
+# Chapter detail pages — extensionless URLs map to the matching .html file.
+# Add a new line for each chapter as they ship.
+[[redirects]]
+  from = "/chapters/01-meta"
+  to = "/chapters/01-meta.html"
+  status = 200
+
+# Legacy /work/<slug> URLs (used while chapters were unbuilt) point at the
+# current chapter location, so any shared link still resolves.
+[[redirects]]
+  from = "/work/meta"
+  to = "/chapters/01-meta.html"
+  status = 301
+
 # HTML should never be cached for long — we want pushes to go live immediately.
 [[headers]]
   for = "/*.html"

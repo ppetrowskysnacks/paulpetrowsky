@@ -21,3 +21,6 @@ logos/meta-negative.png
 
 # Earlier display-style V1 home page kept for reference, not deployed.
 index.v1-display.html
+
+# Reference templates dropped in locally (SNACKS proprietary, not for deploy).
+Work example pages/

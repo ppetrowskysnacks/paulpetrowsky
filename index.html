@@ -15,6 +15,13 @@
        the red splash only appears on overscroll, not in the address bar. -->
   <meta name="theme-color" content="#F6F6F8">
 
+  <!-- Favicon set — SNACKS lightning bolt mark. SVG primary (sharp at any
+       size, dark-mode-aware browsers can repaint it), ICO for legacy
+       browsers, 180×180 PNG for iOS home-screen. -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="alternate icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/favicon-180.png">
+
   <link rel="preload" href="/fonts/Geomanist-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/Geomanist-Medium.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/DDCHardware-Regular.woff2" as="font" type="font/woff2" crossorigin>
@@ -196,7 +203,10 @@
       padding: clamp(48px, 8vw, 112px) 0 clamp(40px, 6vw, 80px);
       align-items: center;
     }
-    @media (min-width: 880px) {
+    /* Two-column hero only kicks in at 1024px+ — at narrower widths the
+       text column is too tight for the full PETROWSKY at the masthead
+       size, so we stack photo above name and give the name full width. */
+    @media (min-width: 1024px) {
       .hero { grid-template-columns: minmax(240px, 360px) minmax(0, 1fr); }
     }
 
@@ -263,7 +273,7 @@
     .intro__name {
       font-family: var(--ddc);
       font-weight: 400;
-      font-size: clamp(56px, 9vw, 128px);
+      font-size: clamp(56px, 8.5vw, 124px);
       line-height: 0.92;
       letter-spacing: 0.005em;
       text-transform: uppercase;
@@ -770,8 +780,16 @@
       margin: 0;
       padding: 0 12px 0 0;
       display: flex;
-      align-items: center;
+      align-items: flex-start;   /* align by card top so date labels line up */
       gap: 20px;
+    }
+    /* Each marquee item now wraps a card + date label, layered vertically.
+       A subtle 1px tick between them suggests the timeline connection. */
+    .marquee__item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 0 0 auto;
     }
     .logo-card {
       flex: 0 0 auto;
@@ -811,6 +829,37 @@
     .logo-card[data-brand="facebook"]  img { max-height: 60%; }
     .logo-card[data-brand="instagram"] img { max-height: 60%; }
 
+    /* Milestone cards — solid-filled era markers (Dom & Tom, SNACKS,
+       Meta). Same dimensions as logo cards for rhythm; brand-color
+       background + white era name + date range communicate the era. */
+    .logo-card--milestone {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 16px 18px;
+      text-align: center;
+      color: #fff;
+    }
+    .logo-card[data-brand="dom-and-tom-era"] { background: #f36c29; }
+    .logo-card[data-brand="snacks-era"]      { background: var(--red); }
+    .logo-card[data-brand="meta-era"]        { background: #1a1a1a; }
+    .milestone__name {
+      font-family: var(--ddc);
+      font-size: 15px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+      line-height: 1;
+    }
+    .milestone__dates {
+      font-family: var(--ddc);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.72);
+      line-height: 1;
+    }
     /* Tile-style logos: match the card background to the logo's native
        backdrop color so the tile blends seamlessly into the card.
        Meta and Dom & Tom both now use wordmark-on-light JPGs, so they
@@ -857,63 +906,101 @@
       padding: 0 var(--pad);
       text-align: center;
     }
+    /* Mantra — closing typographic statement that bookends the red
+       PAUL / PETROWSKY masthead at the top of the page. */
+    .touch__mantra {
+      font-family: var(--ddc);
+      font-weight: 400;
+      font-size: clamp(36px, 5.5vw, 80px);
+      line-height: 0.95;
+      letter-spacing: 0.005em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin: 0 auto clamp(24px, 3vw, 36px);
+      display: flex;
+      flex-direction: column;
+    }
+    .touch__mantra span { display: block; }
+    .touch__mantra-note {
+      font-family: var(--body);
+      font-weight: 400;
+      font-size: clamp(16px, 1.3vw, 18px);
+      line-height: 1.55;
+      color: var(--soft);
+      max-width: 56ch;
+      margin: 0 auto clamp(28px, 4vw, 40px);
+    }
+    .touch__mantra-note strong { color: var(--fg); font-weight: 500; }
+
     .touch__signoff {
       margin: 0 auto clamp(32px, 4vw, 48px);
-      font-style: italic;
-      color: var(--soft);
+      font-weight: 500;
+      color: var(--fg);
       font-size: clamp(17px, 1.4vw, 19px);
       line-height: 1.5;
       max-width: 56ch;
     }
-    .touch__items {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: clamp(20px, 2.4vw, 28px);
-      max-width: 480px;
-      margin: 0 auto;
-      text-align: left;          /* labels and addresses read left-aligned */
+    /* Pill buttons — three centered actions: Email, LinkedIn, Shop. */
+    .touch__buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
     }
-    @media (min-width: 720px) {
-      .touch__items { grid-template-columns: repeat(2, 1fr); }
-    }
-    .touch__items .label { display: block; margin-bottom: 8px; }
-    .touch__items a {
-      font-size: clamp(17px, 1.4vw, 19px);
-      font-weight: 500;
+    .touch__btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      background: #fff;
       color: var(--fg);
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: 15px;
+      letter-spacing: -0.005em;
+      line-height: 1;
       text-decoration: none;
-      border-bottom: 1px solid var(--rule);
-      padding-bottom: 2px;
-      transition: border-color .15s ease, color .15s ease;
+      transition: border-color .15s ease, color .15s ease, transform .15s ease, box-shadow .15s ease;
     }
-    .touch__items a:hover { color: var(--red); border-bottom-color: var(--red); }
+    .touch__btn:hover {
+      color: var(--red);
+      border-color: var(--red);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(231, 63, 62, 0.08);
+    }
+    .touch__btn-arrow { transition: transform .15s ease; }
+    .touch__btn:hover .touch__btn-arrow { transform: translateX(2px); }
 
-    /* Footer */
+    /* Footer — quiet colophon row. The mantra closing statement now
+       lives inside the Get in touch section above. */
     .foot {
       border-top: 1px solid var(--rule);
-      padding: 24px var(--pad) 36px;
+      padding: clamp(28px, 3vw, 40px) var(--pad);
       max-width: var(--max-w);
       margin: 0 auto;
     }
-    .foot__row {
+    .foot__meta {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
       flex-wrap: wrap;
       font-family: var(--body);
       font-weight: 400;
-      font-size: 14px;
+      font-size: 13px;
       letter-spacing: -0.005em;
       color: var(--muted);
     }
-    .foot__row a {
-      color: var(--soft);
+    .foot__meta a {
+      color: inherit;          /* matches the parent's muted gray so both
+                                  sides of the footer read at the same
+                                  weight; hover lifts to red. */
       text-decoration: none;
       transition: color .15s ease;
     }
-    .foot__row a:hover { color: var(--red); }
-    .foot__row a .heart { color: var(--red); }
+    .foot__meta a:hover { color: var(--red); }
+    .foot__meta .heart { color: var(--red); }
 
     /* ───────── Halloween easter egg ─────────
        Pumpkin button surfaces when the visitor types "boo" anywhere
@@ -1024,7 +1111,7 @@
           <span>Petrowsky</span>
         </h1>
         <p class="intro__tag">
-          I'm a principal product designer at <a href="https://www.meta.com/" target="_blank" rel="noopener">Meta</a>, based in Chicago. Working on strengthening people's ability to <a href="https://about.fb.com/news/2025/12/making-it-easier-to-access-account-support-on-facebook-and-instagram/" target="_blank" rel="noopener">remediate issues across Instagram, Facebook, and Business tools</a>.
+          I'm a principal product designer at <a href="https://www.meta.com/" target="_blank" rel="noopener">Meta</a>, based in Chicago. Working on strengthening people's ability to <a href="https://about.fb.com/news/2025/12/making-it-easier-to-access-account-support-on-facebook-and-instagram/" target="_blank" rel="noopener">remediate issues across Instagram, Facebook, and Business tools</a>. I'm also a co-founder of <a href="https://snacksdesign.com" target="_blank" rel="noopener">SNACKS</a>, an AI-native design studio.
         </p>
       </div>
     </section>
@@ -1049,7 +1136,7 @@
         </p>
 
         <p>
-          Before Meta and SNACKS, I spent nearly a decade at <strong>Dom &amp; Tom</strong> — starting as their first design hire in 2010 and ending as Chief Design Officer, leading an 18-person practice across product, brand, and platform work for clients like <a href="https://www.hmhco.com" target="_blank" rel="noopener">Houghton Mifflin Harcourt</a>, <a href="https://www.chase.com" target="_blank" rel="noopener">JPMorgan Chase</a>, <a href="https://www.bloomberg.com" target="_blank" rel="noopener">Bloomberg</a>, <a href="https://www.tysonfoods.com" target="_blank" rel="noopener">Tyson Foods</a>, <a href="https://www.nbcuniversal.com" target="_blank" rel="noopener">NBC Universal</a>, and the <a href="https://www.alz.org" target="_blank" rel="noopener">Alzheimer's Association</a>.
+          Before Meta and SNACKS, I spent over 12 years building a design practice at <strong>Dom &amp; Tom</strong> — starting as their first design hire in 2010 and ending as Chief Design Officer, leading an 18-person practice across product, brand, and platform work for clients like <a href="https://www.hmhco.com" target="_blank" rel="noopener">Houghton Mifflin Harcourt</a>, <a href="https://www.chase.com" target="_blank" rel="noopener">JPMorgan Chase</a>, <a href="https://www.bloomberg.com" target="_blank" rel="noopener">Bloomberg</a>, <a href="https://www.tysonfoods.com" target="_blank" rel="noopener">Tyson Foods</a>, <a href="https://www.nbcuniversal.com" target="_blank" rel="noopener">NBC Universal</a>, and the <a href="https://www.alz.org" target="_blank" rel="noopener">Alzheimer's Association</a>.
         </p>
 
         <p>
@@ -1073,34 +1160,116 @@
       <div class="marquee" aria-hidden="false">
         <div class="marquee__track">
           <ul class="marquee__set">
-            <li class="logo-card" data-brand="meta"><img src="/logos/meta.png" alt="Meta" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="facebook"><img src="/logos/facebook.png" alt="Facebook" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="instagram"><img src="/logos/instagram.png" alt="Instagram" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="chase"><img src="/logos/chase.jpg" alt="JPMorgan Chase" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="dom-and-tom"><img src="/logos/dom-and-tom.jpg" alt="Dom &amp; Tom" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="hearst"><img src="/logos/hearst.png" alt="Hearst" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="hmh"><img src="/logos/hmh.jpg" alt="Houghton Mifflin Harcourt" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="danone"><img src="/logos/danone.jpg" alt="Danone" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="argonne"><img src="/logos/argonne.png" alt="Argonne National Laboratory" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="gemini"><img src="/logos/gemini.jpg" alt="Gemini" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="aar"><img src="/logos/aar.png" alt="AAR" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="benchmark"><img src="/logos/benchmark.png" alt="Benchmark Analytics" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="summer-friday"><img src="/logos/summer-friday.png" alt="Summer Friday" loading="lazy" draggable="false"></li>
+            <!-- DOM & TOM era 2010–2021 -->
+            <li class="marquee__item marquee__item--milestone">
+              <span class="logo-card logo-card--milestone" data-brand="dom-and-tom-era">
+                <span class="milestone__name">Dom &amp; Tom</span>
+                <span class="milestone__dates">2010 — 2021</span>
+              </span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="hearst"><img src="/logos/hearst.png" alt="Hearst" loading="lazy" draggable="false"></span>
+</li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="hmh"><img src="/logos/hmh.jpg" alt="Houghton Mifflin Harcourt" loading="lazy" draggable="false"></span>
+</li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="danone"><img src="/logos/danone.jpg" alt="Danone" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="argonne"><img src="/logos/argonne.png" alt="Argonne National Laboratory" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="aar"><img src="/logos/aar.png" alt="AAR" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="gemini"><img src="/logos/gemini.jpg" alt="Gemini" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="chase"><img src="/logos/chase.jpg" alt="JPMorgan Chase" loading="lazy" draggable="false"></span>
+            </li>
+            <!-- SNACKS era 2019–Present -->
+            <li class="marquee__item marquee__item--milestone">
+              <span class="logo-card logo-card--milestone" data-brand="snacks-era">
+                <span class="milestone__name">SNACKS</span>
+                <span class="milestone__dates">2019 — Present</span>
+              </span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="summer-friday"><img src="/logos/summer-friday.png" alt="Summer Friday" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="benchmark"><img src="/logos/benchmark.png" alt="Benchmark Analytics" loading="lazy" draggable="false"></span>
+            </li>
+            <!-- META era 2021–Present -->
+            <li class="marquee__item marquee__item--milestone">
+              <span class="logo-card logo-card--milestone" data-brand="meta-era">
+                <span class="milestone__name">Meta</span>
+                <span class="milestone__dates">2021 — Present</span>
+              </span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="meta"><img src="/logos/meta.png" alt="Meta" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="facebook"><img src="/logos/facebook.png" alt="Facebook" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="instagram"><img src="/logos/instagram.png" alt="Instagram" loading="lazy" draggable="false"></span>
+            </li>
           </ul>
           <ul class="marquee__set" aria-hidden="true">
-            <li class="logo-card" data-brand="meta"><img src="/logos/meta.png" alt="" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="facebook"><img src="/logos/facebook.png" alt="" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="instagram"><img src="/logos/instagram.png" alt="" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="chase"><img src="/logos/chase.jpg" alt="" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="dom-and-tom"><img src="/logos/dom-and-tom.jpg" alt="" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="hearst"><img src="/logos/hearst.png" alt="" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="hmh"><img src="/logos/hmh.jpg" alt="" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="danone"><img src="/logos/danone.jpg" alt="" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="argonne"><img src="/logos/argonne.png" alt="" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="gemini"><img src="/logos/gemini.jpg" alt="" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="aar"><img src="/logos/aar.png" alt="" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="benchmark"><img src="/logos/benchmark.png" alt="" loading="lazy" draggable="false"></li>
-            <li class="logo-card" data-brand="summer-friday"><img src="/logos/summer-friday.png" alt="" loading="lazy" draggable="false"></li>
+            <li class="marquee__item marquee__item--milestone">
+              <span class="logo-card logo-card--milestone" data-brand="dom-and-tom-era">
+                <span class="milestone__name">Dom &amp; Tom</span>
+                <span class="milestone__dates">2010 — 2021</span>
+              </span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="hearst"><img src="/logos/hearst.png" alt="" loading="lazy" draggable="false"></span>
+</li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="hmh"><img src="/logos/hmh.jpg" alt="" loading="lazy" draggable="false"></span>
+</li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="danone"><img src="/logos/danone.jpg" alt="" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="argonne"><img src="/logos/argonne.png" alt="" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="aar"><img src="/logos/aar.png" alt="" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="gemini"><img src="/logos/gemini.jpg" alt="" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="chase"><img src="/logos/chase.jpg" alt="" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item marquee__item--milestone">
+              <span class="logo-card logo-card--milestone" data-brand="snacks-era">
+                <span class="milestone__name">SNACKS</span>
+                <span class="milestone__dates">2019 — Present</span>
+              </span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="summer-friday"><img src="/logos/summer-friday.png" alt="" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="benchmark"><img src="/logos/benchmark.png" alt="" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item marquee__item--milestone">
+              <span class="logo-card logo-card--milestone" data-brand="meta-era">
+                <span class="milestone__name">Meta</span>
+                <span class="milestone__dates">2021 — Present</span>
+              </span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="facebook"><img src="/logos/facebook.png" alt="" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="instagram"><img src="/logos/instagram.png" alt="" loading="lazy" draggable="false"></span>
+            </li>
           </ul>
         </div>
       </div>
@@ -1112,9 +1281,9 @@
          full chronological list view. -->
     <section class="chapters" id="work" aria-labelledby="work-title">
       <div class="chapters__head">
-        <h2 class="label" id="work-title">Work</h2>
+        <h2 class="label" id="work-title">Some of the work</h2>
         <p class="chapters__lede">
-          Five case studies, all gated. Click any one to request the password.
+          A few stories from the past twenty years as a creative problem solver, manager, and a complex system designer.
         </p>
       </div>
 
@@ -1132,13 +1301,13 @@
         <div class="car-stage">
 
           <!-- Slide 1 — Meta (most recent) -->
-          <a class="car-slide is-active" data-index="0" data-accent="meta" href="/work/meta" aria-label="Architecting Meta's Support — password protected" draggable="false">
+          <a class="car-slide is-active" data-index="0" data-accent="meta" href="/chapters/01-meta.html" aria-label="Architecting Meta's Support — password protected" draggable="false">
             <div class="case-image" data-brand="meta">
               <img src="/images/chapters/01-meta.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
             </div>
             <div class="case-text">
               <span class="case-num">2021 – Present</span>
-              <h3 class="case-headline">Architecting Meta's <em>Support.</em></h3>
+              <h3 class="case-headline">Architecting Meta's <em>Support</em></h3>
               <p class="case-sub">Almost five years inside Meta's support stack — from individual resolution flows to the AI assistant rolling out to billions. The work is equal parts product design and system architecture, across the largest social platforms in the world.</p>
               <span class="case-cta">
                 <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
@@ -1160,7 +1329,7 @@
             </div>
             <div class="case-text">
               <span class="case-num">~2017 · Dom &amp; Tom era</span>
-              <h3 class="case-headline">Dawn of <em>Gemini Mobile.</em></h3>
+              <h3 class="case-headline">Dawn of <em>Gemini Mobile</em></h3>
               <p class="case-sub">A React Native mobile exchange for the crypto revolution — built fast, shipped at scale. Took an early-stage exchange from web-only to a mobile app trusted by traders through one of the wildest stretches in crypto.</p>
               <span class="case-cta">
                 <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
@@ -1182,7 +1351,7 @@
             </div>
             <div class="case-text">
               <span class="case-num">~2015 · Dom &amp; Tom era</span>
-              <h3 class="case-headline">Danone <em>Tests a New Market.</em></h3>
+              <h3 class="case-headline">Danone <em>Tests a New Market</em></h3>
               <p class="case-sub">How a design team learned to empathize across cultures, categories, and consumers. The brief looked like packaging research; the deeper job was teaching the team to listen before designing.</p>
               <span class="case-cta">
                 <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
@@ -1204,7 +1373,7 @@
             </div>
             <div class="case-text">
               <span class="case-num">2010 – 2019</span>
-              <h3 class="case-headline">Dom &amp; Tom — A Giant Ball of <em>Clay.</em></h3>
+              <h3 class="case-headline">Dom &amp; Tom — A Giant Ball of <em>Clay</em></h3>
               <p class="case-sub">Molding a digital product agency from first design hire to an 18-person practice. Nine years, four titles, dozens of clients, and the design culture that scaled alongside the business.</p>
               <span class="case-cta">
                 <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
@@ -1226,7 +1395,7 @@
             </div>
             <div class="case-text">
               <span class="case-num">2005 – 2010 · Triumph Books / Random House</span>
-              <h3 class="case-headline">Random House — <em>Covers &amp; Interiors.</em></h3>
+              <h3 class="case-headline">Random House — <em>Covers &amp; Interiors</em></h3>
               <p class="case-sub">Five-plus years designing book covers and interiors at Triumph Books, a Random House imprint. Where the typography habits — the pacing, the hierarchy, the respect for the page — started.</p>
               <span class="case-cta">
                 <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
@@ -1261,27 +1430,45 @@
         <h2 class="label" id="contact-title">Get in touch</h2>
       </div>
       <div class="touch__body">
-        <p class="touch__signoff">
-          Thanks for stopping by. If you're hiring, building, or just want to talk about support-shaped problems — I'd love to hear from you.
+        <p class="touch__mantra" aria-label="Make. Progress. Work the problem.">
+          <span>Make.</span>
+          <span>Progress.</span>
+          <span>Work the problem.</span>
         </p>
-        <div class="touch__items">
-          <div>
-            <span class="label">Email</span>
-            <a href="mailto:paul@snacksdesign.com">paul@snacksdesign.com</a>
-          </div>
-          <div>
-            <span class="label">LinkedIn</span>
-            <a href="https://www.linkedin.com/in/ppetrowsky" target="_blank" rel="noopener">linkedin.com/in/ppetrowsky</a>
-          </div>
+        <p class="touch__mantra-note">
+          This has been my mantra for years — shorthand for how I think about design. Make something, even rough. Move it forward, especially when it's hard. Focus on what's actually broken, not the noise around it.
+        </p>
+        <p class="touch__signoff">
+          If you're interested in working together, I'd love to hear from you.
+        </p>
+        <div class="touch__buttons">
+          <a class="touch__btn" href="mailto:paul@snacksdesign.com">
+            Email
+            <svg class="touch__btn-arrow" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"/>
+            </svg>
+          </a>
+          <a class="touch__btn" href="https://www.linkedin.com/in/ppetrowsky" target="_blank" rel="noopener" aria-label="Paul on LinkedIn (opens in new tab)">
+            LinkedIn
+            <svg class="touch__btn-arrow" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"/>
+            </svg>
+          </a>
+          <a class="touch__btn" href="https://shop.snacksdesign.com/" target="_blank" rel="noopener" aria-label="SNACKS shop (opens in new tab)">
+            Shop
+            <svg class="touch__btn-arrow" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"/>
+            </svg>
+          </a>
         </div>
       </div>
     </section>
   </main>
 
   <footer class="foot">
-    <div class="foot__row">
-      <a href="https://snacksdesign.com/" target="_blank" rel="noopener">Made with <span class="heart" aria-hidden="true">&hearts;</span> love in Chicago</a>
-      <span>Make. Progress. Work the problem.</span>
+    <div class="foot__meta">
+      <span>© <span class="foot__year">2026</span> Paul Petrowsky</span>
+      <a href="https://snacksdesign.com/" target="_blank" rel="noopener">Made with <span class="heart" aria-hidden="true">&hearts;</span> in Chicago</a>
     </div>
   </footer>
 
@@ -1606,6 +1793,14 @@
         // Auto-dismiss if ignored for 12 seconds
         setTimeout(dismiss, 12000);
       }
+    })();
+  </script>
+
+  <script>
+    /* Auto-update the footer copyright year so it never drifts. */
+    (function () {
+      var y = document.querySelector('.foot__year');
+      if (y) y.textContent = new Date().getFullYear();
     })();
   </script>
 

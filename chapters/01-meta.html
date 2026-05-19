@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Architecting Meta's Support — Paul Petrowsky</title>
+  <meta name="description" content="Five years rebuilding the system behind support across Facebook, Instagram, and Business — flows, primitives, taxonomy, and AI-assisted recovery.">
+  <meta name="robots" content="noindex, nofollow">
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Architecting Meta's Support — Paul Petrowsky">
+  <meta property="og:description" content="Five years rebuilding the system behind support across Facebook, Instagram, and Business.">
+
+  <meta name="theme-color" content="#F6F6F8">
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="alternate icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/favicon-180.png">
+
+  <link rel="preload" href="/fonts/Geomanist-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Geomanist-Medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/DDCHardware-Regular.woff2" as="font" type="font/woff2" crossorigin>
+
+  <style>
+    /* ───────── Fonts ───────── */
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Regular.woff2") format("woff2");        font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Regular-Italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Medium.woff2") format("woff2");         font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Medium-Italic.woff2") format("woff2");  font-weight: 500; font-style: italic; font-display: swap; }
+    @font-face { font-family: "Geomanist";   src: url("/fonts/Geomanist-Bold.woff2") format("woff2");           font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: "DDC Hardware";src: url("/fonts/DDCHardware-Regular.woff2") format("woff2");     font-weight: 400; font-style: normal; font-display: swap; }
+
+    /* ───────── Tokens — match index.html exactly ───────── */
+    :root {
+      --bg:    #F6F6F8;
+      --fg:    #252525;
+      --muted: rgba(37, 37, 37, 0.55);
+      --soft:  rgba(37, 37, 37, 0.74);
+      --rule:  rgba(37, 37, 37, 0.14);
+      --red:   #E73F3E;
+
+      --ddc:  "DDC Hardware", ui-sans-serif, system-ui, sans-serif;
+      --body: "Geomanist", -apple-system, BlinkMacSystemFont, "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+
+      --pad:    clamp(24px, 5vw, 80px);
+      --col-w:  860px;
+      --max-w:  1320px;
+      --radius: 10px;
+
+      --nav-h: 72px;
+      --frame: 10px;
+      --frame-color: rgba(37, 37, 37, 0.07);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; }
+    ::selection { background: var(--red); color: #fff; }
+
+    html { scroll-behavior: smooth; background: var(--red); }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--body);
+      font-size: 18px;
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* ───────── Page frame ───────── */
+    .frame {
+      position: fixed;
+      top: var(--nav-h);
+      left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 5;
+      border-top:   var(--frame) solid var(--frame-color);
+      border-left:  var(--frame) solid var(--frame-color);
+      border-right: var(--frame) solid var(--frame-color);
+    }
+
+    /* ───────── Nav (matches index.html) ───────── */
+    .site-nav {
+      position: sticky; top: 0; z-index: 10;
+      background: var(--bg);
+      border-bottom: 1px solid var(--rule);
+    }
+    .site-nav__row {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 18px var(--pad);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--red);
+      color: #fff;
+      font-family: var(--ddc);
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      padding: 0.38em 0.62em 0.28em 0.55em;
+      line-height: 0.9;
+      text-decoration: none;
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 0.35em), calc(100% - 0.35em) 100%, 0 100%);
+    }
+    .site-nav__links { display: flex; align-items: center; gap: 22px; }
+    .site-nav__links a {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--soft);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      transition: color .15s ease, border-color .15s ease;
+    }
+    .site-nav__links a:hover { color: var(--red); border-bottom-color: var(--red); }
+
+    /* ───────── Layout ───────── */
+    main {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 var(--pad);
+    }
+
+    /* ───────── Case hero ─────────
+       Dark band that sits flush under the nav. Cover image with a quiet
+       gradient overlay, headline + subtitle stacked left, eyebrow above. */
+    .case-hero {
+      position: relative;
+      margin: 0 calc(var(--pad) * -1);
+      padding: clamp(80px, 12vw, 180px) var(--pad) clamp(64px, 10vw, 140px);
+      background: var(--fg);
+      color: #fff;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .case-hero__bg {
+      position: absolute; inset: 0;
+      z-index: -1;
+      background: #0c0d10;
+    }
+    .case-hero__bg img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: center;
+      opacity: 0.55;
+    }
+    .case-hero__bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.0) 70%, rgba(0,0,0,0.35) 100%),
+        linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 60%, rgba(0,0,0,0.0) 100%);
+    }
+    .case-hero__inner {
+      max-width: 880px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .case-hero__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--ddc);
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 28px;
+    }
+    .case-hero__eyebrow .num { color: var(--red); }
+    .case-hero__back {
+      font-family: var(--ddc);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 36px;
+      transition: color .15s ease;
+    }
+    .case-hero__back:hover { color: #fff; }
+    .case-hero h1 {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: clamp(38px, 5.6vw, 76px);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin: 0 0 28px;
+      max-width: 22ch;
+      color: #fff;
+    }
+    .case-hero h1 em {
+      font-style: italic;
+      color: #fff;
+      opacity: 0.7;
+    }
+    .case-hero__sub {
+      font-family: var(--body);
+      font-size: clamp(17px, 1.4vw, 21px);
+      line-height: 1.55;
+      color: rgba(255,255,255,0.78);
+      max-width: 58ch;
+      margin: 0;
+    }
+    .case-hero__meta {
+      margin-top: 40px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: clamp(20px, 3vw, 40px);
+      font-family: var(--body);
+      font-size: 13px;
+      color: rgba(255,255,255,0.55);
+    }
+    .case-hero__meta dt {
+      font-family: var(--ddc);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 4px;
+    }
+    .case-hero__meta dd {
+      margin: 0;
+      color: rgba(255,255,255,0.85);
+      letter-spacing: -0.005em;
+    }
+
+    /* ───────── Case sections ───────── */
+    .case-section {
+      padding: clamp(72px, 9vw, 128px) 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .case-section:last-of-type { border-bottom: 0; }
+    .case-section__inner {
+      max-width: var(--col-w);
+      margin: 0 auto;
+    }
+    .case-section__label {
+      font-family: var(--ddc);
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .case-section__label .num { color: var(--red); }
+    .case-section h2 {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: clamp(32px, 4.4vw, 52px);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin: 0 0 28px;
+      max-width: 22ch;
+      color: var(--fg);
+    }
+    .case-section h2 em { font-style: italic; color: var(--soft); }
+
+    .case-prose p {
+      margin: 0 0 1.05em;
+      font-size: clamp(18px, 1.45vw, 20px);
+      line-height: 1.6;
+      color: var(--fg);
+      max-width: 64ch;
+    }
+    .case-prose p:last-child { margin-bottom: 0; }
+    .case-prose p strong { font-weight: 500; }
+    .case-prose p em { font-style: italic; }
+    .case-prose a {
+      color: var(--fg);
+      text-decoration: none;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 1px;
+      transition: color .15s ease, border-color .15s ease;
+    }
+    .case-prose a:hover { color: var(--red); border-bottom-color: var(--red); }
+
+    /* ───────── Inline pull quote ───────── */
+    .case-pull {
+      margin: clamp(40px, 5vw, 64px) 0;
+      padding: 0 0 0 clamp(18px, 2.5vw, 32px);
+      border-left: 2px solid var(--red);
+      font-family: var(--body);
+      font-weight: 500;
+      font-style: italic;
+      font-size: clamp(22px, 2.4vw, 30px);
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+      max-width: 40ch;
+    }
+    .case-pull cite {
+      display: block;
+      margin-top: 18px;
+      font-family: var(--ddc);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-style: normal;
+      color: var(--muted);
+    }
+
+    /* ───────── Feature image / video ───────── */
+    .case-figure {
+      margin: clamp(40px, 5vw, 64px) 0;
+    }
+    .case-figure__frame {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #1a1a1a;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .case-figure__frame img,
+    .case-figure__frame video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: inherit;
+    }
+    .case-figure__frame--empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.35);
+      font-family: var(--ddc);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      background:
+        repeating-linear-gradient(45deg, #1a1a1a 0 8px, #222 8px 16px);
+    }
+    .case-figure figcaption {
+      margin-top: 14px;
+      font-family: var(--body);
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--muted);
+      max-width: 64ch;
+    }
+
+    /* ───────── 2-up gallery ───────── */
+    .case-gallery {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin: clamp(40px, 5vw, 64px) 0;
+    }
+    .case-gallery figure { margin: 0; }
+    .case-gallery .case-figure__frame {
+      aspect-ratio: 4 / 3;
+    }
+    .case-gallery figcaption {
+      margin-top: 10px;
+      font-family: var(--body);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    @media (max-width: 720px) {
+      .case-gallery { grid-template-columns: 1fr; }
+    }
+
+    /* ───────── Process steps ───────── */
+    .case-steps {
+      margin: clamp(40px, 5vw, 64px) 0;
+      list-style: none;
+      padding: 0;
+      counter-reset: step;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(20px, 3vw, 36px);
+    }
+    .case-steps li {
+      counter-increment: step;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .case-steps li::before {
+      content: counter(step, decimal-leading-zero);
+      font-family: var(--ddc);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      color: var(--red);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .case-steps h3 {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: clamp(17px, 1.3vw, 19px);
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+    .case-steps p {
+      font-family: var(--body);
+      font-size: clamp(14px, 1.05vw, 15px);
+      line-height: 1.55;
+      color: var(--muted);
+      margin: 0;
+    }
+    @media (max-width: 720px) {
+      .case-steps { grid-template-columns: 1fr; gap: 24px; }
+    }
+
+    /* ───────── Metrics row ───────── */
+    .case-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: clamp(32px, 4vw, 48px) 0 0;
+    }
+    .case-metric {
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      padding: clamp(20px, 2vw, 28px);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(255,255,255,0.35);
+    }
+    .case-metric .num {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: clamp(32px, 4vw, 48px);
+      line-height: 1;
+      letter-spacing: -0.02em;
+      color: var(--fg);
+    }
+    .case-metric .label {
+      font-family: var(--body);
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    @media (max-width: 720px) {
+      .case-metrics { grid-template-columns: 1fr; }
+    }
+
+    /* ───────── Divider with label ───────── */
+    .case-divider {
+      margin: clamp(40px, 5vw, 56px) 0;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .case-divider::before,
+    .case-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--rule);
+    }
+    .case-divider span {
+      font-family: var(--ddc);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ───────── Up next ───────── */
+    .case-next {
+      background: var(--fg);
+      color: #fff;
+      margin: 0 calc(var(--pad) * -1);
+      padding: clamp(56px, 7vw, 96px) var(--pad);
+    }
+    .case-next__inner {
+      max-width: var(--col-w);
+      margin: 0 auto;
+    }
+    .case-next__label {
+      font-family: var(--ddc);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 16px;
+    }
+    .case-next__link {
+      display: grid;
+      grid-template-columns: 140px 1fr auto;
+      gap: 24px;
+      align-items: center;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: var(--radius);
+      text-decoration: none;
+      color: inherit;
+      transition: border-color .25s ease, background-color .25s ease, transform .25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .case-next__link:hover {
+      border-color: rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.05);
+      transform: translateY(-2px);
+    }
+    .case-next__thumb {
+      aspect-ratio: 4 / 3;
+      background: rgba(255,255,255,0.06);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .case-next__thumb img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .case-next__head {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: clamp(18px, 1.4vw, 22px);
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+      color: #fff;
+      margin: 0;
+    }
+    .case-next__head .lock {
+      width: 12px;
+      height: 12px;
+      margin-right: 8px;
+      vertical-align: -1px;
+      opacity: 0.6;
+    }
+    .case-next__arrow {
+      width: 22px;
+      height: 22px;
+      color: rgba(255,255,255,0.6);
+      transition: transform .25s cubic-bezier(0.2, 0.8, 0.2, 1), color .2s ease;
+    }
+    .case-next__link:hover .case-next__arrow {
+      transform: translateX(4px);
+      color: #fff;
+    }
+    @media (max-width: 540px) {
+      .case-next__link {
+        grid-template-columns: 1fr auto;
+      }
+      .case-next__thumb { display: none; }
+    }
+
+    /* ───────── Footer (mirrors index.html .foot) ───────── */
+    .foot {
+      border-top: 1px solid var(--rule);
+      padding: clamp(28px, 3vw, 40px) var(--pad);
+      max-width: var(--max-w);
+      margin: 0 auto;
+    }
+    .foot__meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-family: var(--body);
+      font-weight: 400;
+      font-size: 13px;
+      letter-spacing: -0.005em;
+      color: var(--muted);
+    }
+    .foot__meta a {
+      color: inherit;
+      text-decoration: none;
+      transition: color .15s ease;
+    }
+    .foot__meta a:hover { color: var(--red); }
+    .foot__meta .heart { color: var(--red); }
+
+    /* ───────── Password gate ─────────
+       Full-viewport overlay that sits over the page until the visitor
+       enters the shared password. The gate uses sessionStorage so it
+       only prompts once per browser session.
+       To change the password: edit GATE_PW in the script below. */
+    .gate {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .gate__inner {
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+    }
+    .gate__bolt {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 24px;
+      color: var(--red);
+    }
+    .gate__bolt svg { width: 100%; height: 100%; display: block; }
+    .gate__eyebrow {
+      font-family: var(--ddc);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .gate__title {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: clamp(28px, 3.4vw, 36px);
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--fg);
+      margin: 0 0 12px;
+    }
+    .gate__lede {
+      font-family: var(--body);
+      font-size: 15px;
+      color: var(--soft);
+      max-width: 36ch;
+      margin: 0 auto 32px;
+      line-height: 1.5;
+    }
+    .gate__form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .gate__form input {
+      flex: 1;
+      font-family: var(--body);
+      font-size: 16px;
+      line-height: 1.2;
+      padding: 14px 16px;
+      border: 1px solid var(--rule);
+      background: #fff;
+      color: var(--fg);
+      border-radius: 8px;
+      outline: none;
+      transition: border-color .15s ease;
+    }
+    .gate__form input:focus { border-color: var(--fg); }
+    .gate__form input.is-wrong { border-color: var(--red); }
+    .gate__form button {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+      padding: 14px 22px;
+      background: var(--fg);
+      color: #fff;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color .15s ease;
+    }
+    .gate__form button:hover { background: var(--red); }
+    .gate__hint {
+      font-family: var(--body);
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0 0 24px;
+      min-height: 1.4em;
+    }
+    .gate__hint a { color: var(--fg); border-bottom: 1px solid var(--rule); padding-bottom: 1px; text-decoration: none; }
+    .gate__hint a:hover { color: var(--red); border-bottom-color: var(--red); }
+    .gate__back {
+      font-family: var(--ddc);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color .15s ease;
+    }
+    .gate__back:hover { color: var(--red); }
+
+    /* Hide page content while locked. Use visibility (not display) so
+       the layout doesn't reflow on unlock. */
+    body.is-locked .site-nav,
+    body.is-locked .frame,
+    body.is-locked main,
+    body.is-locked .foot { visibility: hidden; }
+    body:not(.is-locked) .gate { display: none; }
+  </style>
+</head>
+<body class="is-locked">
+
+  <!-- ───────── Password gate ───────── -->
+  <div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+    <div class="gate__inner">
+      <div class="gate__bolt" aria-hidden="true">
+        <!-- Same lightning bolt mark used in the favicon -->
+        <svg viewBox="0 0 144 144" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(36 6)">
+            <path d="M0.136 78.77C-0.606 81.38 1.808 83.80 4.410 83.05L35.246 75.61C37.847 75.05 40.261 77.28 39.519 79.89L27.445 127.55C26.333 131.64 32.273 133.88 34.133 129.97L71.656 52.15C72.957 49.36 70.355 46.19 67.382 47.31L40.821 53.82C38.037 54.76 35.435 51.96 36.365 49.17L52.154 6.91C52.708 4.86 51.224 2.63 48.993 2.25L22.985 0.02C21.314 -0.17 19.642 0.95 19.271 2.63L0.136 78.77Z" fill="currentColor"/>
+          </g>
+        </svg>
+      </div>
+      <div class="gate__eyebrow">Private Chapter</div>
+      <h1 class="gate__title" id="gate-title">Password protected</h1>
+      <p class="gate__lede">
+        These chapters are shared with a small group. Drop the password to read.
+      </p>
+      <form class="gate__form" id="gateForm" autocomplete="off">
+        <input
+          type="password"
+          id="gatePw"
+          name="pw"
+          placeholder="Password"
+          aria-label="Password"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          required>
+        <button type="submit">Read</button>
+      </form>
+      <p class="gate__hint" id="gateHint" aria-live="polite">
+        Don't have it? <a href="/#contact">Ask Paul.</a>
+      </p>
+      <a class="gate__back" href="/">← Back to home</a>
+    </div>
+  </div>
+
+  <!-- ───────── Nav ───────── -->
+  <nav class="site-nav" id="nav" aria-label="Primary">
+    <div class="site-nav__row">
+      <a href="https://snacksdesign.com" target="_blank" rel="noopener" class="logo" aria-label="SNACKS home">SNACKS</a>
+      <div class="site-nav__links">
+        <a href="/#work">Work</a>
+        <a href="https://www.linkedin.com/in/ppetrowsky" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="/#contact">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="frame" aria-hidden="true"></div>
+
+  <main id="top">
+
+    <!-- ───────── Hero ───────── -->
+    <section class="case-hero" aria-labelledby="case-title">
+      <div class="case-hero__bg" aria-hidden="true">
+        <!-- Optional hero background image. Drop a wide, atmospheric
+             image at /images/chapters/01-meta-hero.jpg and uncomment.
+             The dark overlay handles legibility. -->
+        <!-- <img src="/images/chapters/01-meta-hero.jpg" alt="" loading="eager"> -->
+      </div>
+      <div class="case-hero__inner">
+        <a class="case-hero__back" href="/work.html">← All work</a>
+        <div class="case-hero__eyebrow">
+          <span class="num">01</span>
+          <span>Architecting Meta's Support</span>
+        </div>
+        <h1 id="case-title">
+          Designing the system <em>that designs the flows.</em>
+        </h1>
+        <p class="case-hero__sub">
+          Five years inside Central Integrity &amp; Support — rebuilding the layer underneath every help, recovery, and report experience across Facebook, Instagram, and Meta's business surfaces.
+        </p>
+        <dl class="case-hero__meta">
+          <div>
+            <dt>Role</dt>
+            <dd>Principal Product Designer</dd>
+          </div>
+          <div>
+            <dt>Team</dt>
+            <dd>Central Integrity &amp; Support</dd>
+          </div>
+          <div>
+            <dt>Years</dt>
+            <dd>2021 — Present</dd>
+          </div>
+          <div>
+            <dt>Surfaces</dt>
+            <dd>Facebook · Instagram · Business</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ───────── 01 Challenge ───────── -->
+    <section class="case-section" aria-labelledby="challenge-title">
+      <div class="case-section__inner">
+        <div class="case-section__label">
+          <span class="num">01</span>
+          <span>Challenge</span>
+        </div>
+        <h2 id="challenge-title">The wall behind the report button.</h2>
+
+        <div class="case-prose">
+          <p>
+            Across Meta's surfaces, billions of people hit the same wall when something goes wrong. They report a post. They appeal a decision. They try to recover an account. Their request goes into a queue. The flow tells them very little. They never quite know if they were heard.
+          </p>
+          <p>
+            That wall wasn't intentional. It was the accumulated result of each team solving support in their own corner, with their own primitives, on their own timeline. The patchwork read — accurately — like the company wasn't listening.
+          </p>
+          <p>
+            I joined <a href="https://www.meta.com/" target="_blank" rel="noopener">Meta</a>'s Central Integrity &amp; Support team in 2021 to design support flows. About six months in, the real problem came into focus: better flows weren't going to fix this. We needed something underneath the flows.
+          </p>
+        </div>
+
+        <!-- Featured before-state visual. Drop a wide image at the path
+             below to bring it forward. The pattern placeholder shows
+             where it'll sit. -->
+        <figure class="case-figure">
+          <div class="case-figure__frame case-figure__frame--empty">
+            Image · 01-meta-before.jpg
+          </div>
+          <figcaption>
+            The original landscape — multiple support entry points, no shared vocabulary, every team inventing its own primitives.
+          </figcaption>
+        </figure>
+
+      </div>
+    </section>
+
+    <!-- ───────── 02 Approach ───────── -->
+    <section class="case-section" aria-labelledby="approach-title">
+      <div class="case-section__inner">
+        <div class="case-section__label">
+          <span class="num">02</span>
+          <span>Approach</span>
+        </div>
+        <h2 id="approach-title">Stop drawing flows. Start designing the system that draws them.</h2>
+
+        <div class="case-prose">
+          <p>
+            The reframe was this: pull out a small set of reusable primitives. Wire them to a shared taxonomy of problems, audiences, and recovery paths. Connect the taxonomy to the model that decides what to surface next. Once that exists, teams across the company can ship support experiences without inventing a new vocabulary every time.
+          </p>
+          <p>
+            The work spans research, product strategy, design systems, information architecture, and — increasingly — the prompts and rails for AI-assisted recovery. Six product surfaces. Three product organizations. One shared layer underneath.
+          </p>
+        </div>
+
+        <blockquote class="case-pull">
+          These days I'm not designing flows — I'm designing the system that designs the flows.
+          <cite>Paul, year four</cite>
+        </blockquote>
+
+        <div class="case-divider"><span>Three moves</span></div>
+
+        <ol class="case-steps">
+          <li>
+            <h3>Map the territory</h3>
+            <p>Audit every existing support experience across IG, Facebook, and Business. Tag the patterns. Surface where teams diverged silently.</p>
+          </li>
+          <li>
+            <h3>Build the primitives</h3>
+            <p>A small composable kit — status, context, action, recovery, escalation — that any team can stitch into a flow without re-litigating the basics.</p>
+          </li>
+          <li>
+            <h3>Wire the brain</h3>
+            <p>Connect primitives to a shared taxonomy + AI-assisted recovery so the system decides what to show, not just where to put it.</p>
+          </li>
+        </ol>
+
+        <!-- Two-up: process artifacts. Drop images to bring forward. -->
+        <div class="case-gallery">
+          <figure>
+            <div class="case-figure__frame case-figure__frame--empty">Image · 01-meta-system.jpg</div>
+            <figcaption>System map — primitives ↔ taxonomy ↔ recovery rails.</figcaption>
+          </figure>
+          <figure>
+            <div class="case-figure__frame case-figure__frame--empty">Image · 01-meta-flows.jpg</div>
+            <figcaption>Six surfaces, one shared vocabulary.</figcaption>
+          </figure>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ───────── 03 Outcome ───────── -->
+    <section class="case-section" aria-labelledby="outcome-title">
+      <div class="case-section__inner">
+        <div class="case-section__label">
+          <span class="num">03</span>
+          <span>Outcome</span>
+        </div>
+        <h2 id="outcome-title">From a wall into a system.</h2>
+
+        <div class="case-prose">
+          <p>
+            The first public-facing wave shipped in <a href="https://about.fb.com/news/2025/12/making-it-easier-to-access-account-support-on-facebook-and-instagram/" target="_blank" rel="noopener">December 2025</a> — people can now see what's happening with their reports, follow up, and recover the account, post, or ad without getting routed to a human queue first.
+          </p>
+          <p>
+            Six surfaces are live on the shared layer. The patterns are documented, the taxonomy is owned by partners across three orgs, and AI-assisted recovery is rolling out one slice at a time. The system isn't done — it's the kind of work that never really is — but for the first time, it's a system.
+          </p>
+        </div>
+
+        <div class="case-metrics">
+          <div class="case-metric">
+            <span class="num">6</span>
+            <span class="label">Product surfaces on the shared layer</span>
+          </div>
+          <div class="case-metric">
+            <span class="num">3</span>
+            <span class="label">Product organizations now using the same primitives</span>
+          </div>
+          <div class="case-metric">
+            <span class="num">5 yrs</span>
+            <span class="label">From flow designer to systems lead</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── Up next ───────── -->
+    <section class="case-next" aria-label="Up next">
+      <div class="case-next__inner">
+        <div class="case-next__label">Up next — Chapter 02</div>
+        <a class="case-next__link" href="/work.html">
+          <div class="case-next__thumb">
+            <img src="/images/chapters/03-gemini-mobile.jpg" alt="" loading="lazy" onerror="this.style.display='none'">
+          </div>
+          <h3 class="case-next__head">
+            <svg class="lock" viewBox="0 0 13 14" aria-hidden="true">
+              <path d="M3 6V4a3.5 3.5 0 1 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+              <rect x="2" y="6" width="9" height="7" rx="1.2" fill="currentColor"/>
+            </svg>
+            Dawn of Gemini Mobile — a launch that became a category.
+          </h3>
+          <svg class="case-next__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 12 H21 M14 5 L21 12 L14 19"/>
+          </svg>
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <div class="foot__meta">
+      <span>© <span class="foot__year">2026</span> Paul Petrowsky</span>
+      <a href="https://snacksdesign.com/" target="_blank" rel="noopener">Made with <span class="heart" aria-hidden="true">&hearts;</span> in Chicago</a>
+    </div>
+  </footer>
+
+  <script>
+    /* ───────── Password gate ─────────
+       Shared password is stored in sessionStorage so the gate only
+       prompts once per browser session. To change the password, edit
+       GATE_PW below and redeploy.
+
+       Note: this is intentionally light protection — it keeps casual
+       visitors out, not motivated ones. For sensitive content move to
+       a server-side gate (Netlify Identity, Cloudflare Access, etc.). */
+    (function initGate() {
+      var GATE_PW   = 'makeprogress';        // ← shared password
+      var STORE_KEY = 'pp:chapters:unlock';
+
+      var body  = document.body;
+      var gate  = document.getElementById('gate');
+      var form  = document.getElementById('gateForm');
+      var input = document.getElementById('gatePw');
+      var hint  = document.getElementById('gateHint');
+
+      try {
+        if (sessionStorage.getItem(STORE_KEY) === GATE_PW) {
+          body.classList.remove('is-locked');
+          return;
+        }
+      } catch (_) { /* sessionStorage blocked — show the gate */ }
+
+      // Focus the input on next tick so iOS shows the keyboard.
+      setTimeout(function () { input.focus(); }, 50);
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var v = (input.value || '').trim().toLowerCase();
+        if (v === GATE_PW) {
+          try { sessionStorage.setItem(STORE_KEY, GATE_PW); } catch (_) {}
+          body.classList.remove('is-locked');
+        } else {
+          input.classList.add('is-wrong');
+          hint.innerHTML = "That's not it. <a href=\"/#contact\">Ask Paul</a>.";
+          input.select();
+        }
+      });
+
+      input.addEventListener('input', function () {
+        input.classList.remove('is-wrong');
+      });
+    })();
+
+    /* Stamp current year in the footer. */
+    (function stampYear() {
+      var y = document.querySelector('.foot__year');
+      if (y) y.textContent = String(new Date().getFullYear());
+    })();
+  </script>
+
+</body>
+</html>
