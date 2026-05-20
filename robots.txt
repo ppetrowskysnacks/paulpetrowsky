@@ -1,0 +1,9 @@
+# Allow general indexing of the public pages.
+User-agent: *
+Allow: /$
+Allow: /work.html
+# Gated chapter content (NDA-protected behind a password) — keep out
+# of search results even though pages also carry a noindex meta tag.
+Disallow: /chapters/
+
+Sitemap: https://paulpetrowsky.com/sitemap.xml

@@ -5,15 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Paul Petrowsky — Designer</title>
   <meta name="description" content="Paul Petrowsky. Designer and co-founder. Principal Product Designer at Meta. Co-founder of SNACKS. Over twenty years in design.">
+  <link rel="canonical" href="https://paulpetrowsky.com/">
 
+  <!-- ───────── OpenGraph ───────── -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Paul Petrowsky">
+  <meta property="og:locale" content="en_US">
   <meta property="og:title" content="Paul Petrowsky — Designer">
   <meta property="og:description" content="Designer and co-founder. Principal Product Designer at Meta. Co-founder of SNACKS. Over twenty years in design.">
-  <meta property="og:url" content="https://paulpetrowsky.com">
+  <meta property="og:url" content="https://paulpetrowsky.com/">
+  <meta property="og:image" content="https://paulpetrowsky.com/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Paul Petrowsky — Principal Product Designer at Meta. Co-founder of SNACKS.">
+
+  <!-- ───────── Twitter card — falls back when other surfaces (Slack etc.)
+       don't read OG; summary_large_image renders a hero unfurl. ───────── -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Paul Petrowsky — Designer">
+  <meta name="twitter:description" content="Principal Product Designer at Meta. Co-founder of SNACKS. Over twenty years in design.">
+  <meta name="twitter:image" content="https://paulpetrowsky.com/og-image.png">
+  <meta name="twitter:image:alt" content="Paul Petrowsky — Principal Product Designer at Meta. Co-founder of SNACKS.">
 
   <!-- Match the cream paper so the browser chrome blends into the page;
        the red splash only appears on overscroll, not in the address bar. -->
   <meta name="theme-color" content="#F6F6F8">
+
+  <!-- ───────── Structured data — Person schema ─────────
+       Tells Google, Bing, and LLM-powered search exactly who this site
+       is about. Powers the knowledge panel on name searches and helps
+       AI tools cite the right facts (current role, employers, location,
+       social profiles). Keep in sync with the visible copy. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Paul Petrowsky",
+    "url": "https://paulpetrowsky.com/",
+    "image": "https://paulpetrowsky.com/og-image.png",
+    "jobTitle": "Principal Product Designer",
+    "worksFor": {
+      "@type": "Organization",
+      "name": "Meta",
+      "url": "https://about.meta.com/"
+    },
+    "affiliation": {
+      "@type": "Organization",
+      "name": "SNACKS",
+      "url": "https://snacksdesign.com/"
+    },
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Chicago",
+      "addressRegion": "IL",
+      "addressCountry": "US"
+    },
+    "sameAs": [
+      "https://www.linkedin.com/in/ppetrowsky",
+      "https://snacksdesign.com/"
+    ],
+    "description": "Principal Product Designer at Meta. Co-founder of SNACKS. Over twenty years in design.",
+    "knowsAbout": [
+      "Product Design",
+      "Design Systems",
+      "Customer Support Design",
+      "AI Product Design",
+      "Design Leadership"
+    ]
+  }
+  </script>
 
   <!-- Favicon set — SNACKS lightning bolt mark. SVG primary (sharp at any
        size, dark-mode-aware browsers can repaint it), ICO for legacy
