@@ -742,20 +742,30 @@
     .car-mini:hover { color: var(--red); transform: translateX(2px); }
     .car-mini.car-prev:hover { transform: translateX(-2px); }
 
-    /* Mobile — drop absolute positioning so the active slide drives
-       natural section height; hide inactive slides outright. */
+    /* Mobile — stack all slides in one grid cell so the active slide
+       drives the cell height while inactive slides remain in-flow
+       underneath at opacity 0. The earlier "display: none" toggle here
+       was simpler but blocked transitions (you can't animate display),
+       so the slide-in / slide-out animation never played on mobile.
+       Grid-area:1/1 lets the slides overlap (same effect as desktop's
+       absolute positioning) without locking a fixed pixel height. */
     @media (max-width: 768px) {
-      .car-stage { height: auto; }
+      .car-stage {
+        height: auto;
+        display: grid;
+        grid-template-columns: 1fr;
+      }
       .car-slide {
-        position: relative;
+        position: relative;    /* not absolute — sit inside the grid cell */
         inset: auto;
+        grid-area: 1 / 1;      /* every slide shares the same cell */
+        align-self: start;     /* anchor to top — natural height, not stretched */
         grid-template-columns: 1fr;
         gap: 0;
-        transform: none;
-        display: none;
+        /* Inherits opacity / transform / transition from base .car-slide,
+           so is-active and is-leaving animate the same way as desktop —
+           direction-aware via the --enter-x and --leave-x variables. */
       }
-      .car-slide.is-active { display: grid; opacity: 1; transform: none; }
-      .car-slide.is-leaving { display: none; }
       .case-image { aspect-ratio: 4 / 3; height: auto; }
       .case-headline { max-width: 100%; }
       /* On mobile, the image sits at the TOP of the card — flip rounded
