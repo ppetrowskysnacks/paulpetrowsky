@@ -972,6 +972,10 @@
     }
     .gate__hint a:hover { color: var(--red); border-bottom-color: var(--red); }
   </style>
+
+  <!-- ───────── Analytics — GoatCounter ───────── -->
+  <script data-goatcounter="https://ppetrowsky.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
 </head>
 <body class="is-locked chapter--meta">
 
@@ -1417,12 +1421,22 @@
         setTimeout(function () { input.focus(); }, 60);
       }
 
+      // Helper for GoatCounter custom events — no-ops if the analytics
+       // script is blocked or hasn't loaded yet.
+      function gcCount(name) {
+        if (typeof window.goatcounter !== 'undefined' && window.goatcounter.count) {
+          window.goatcounter.count({ path: name, event: true });
+        }
+      }
+
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         var v = (input.value || '').trim().toLowerCase();
+        gcCount('gate-attempted');
         if (v === GATE_PW) {
           try { sessionStorage.setItem(STORE_KEY, GATE_PW); } catch (_) {}
           body.classList.remove('is-locked');
+          gcCount('gate-unlocked');
         } else {
           input.classList.add('is-wrong');
           input.select();

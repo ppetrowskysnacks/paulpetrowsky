@@ -1140,6 +1140,11 @@
       .prose p { font-size: 17px; }
     }
   </style>
+  <!-- ───────── Analytics — GoatCounter ─────────
+       Privacy-friendly pageview + event tracking. No cookies, no banner,
+       ~3KB async script. Dashboard: https://ppetrowsky.goatcounter.com -->
+  <script data-goatcounter="https://ppetrowsky.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 
@@ -2175,6 +2180,37 @@
       window.addEventListener('resize', measure);
 
       requestAnimationFrame(function (t) { lastTickT = t; tick(t); });
+    })();
+  </script>
+
+  <script>
+    /* ───────── Analytics events ─────────
+       Fires GoatCounter custom events on the high-signal outbound
+       clicks — contact pills (email, LinkedIn, SNACKS shop) and the
+       David Bean link in the SNACKS paragraph. Pageviews are tracked
+       automatically by the count.js script in <head>; this only adds
+       click-level granularity for the actions that signal interest.
+       Guarded with typeof checks so the site no-ops if the analytics
+       script is blocked or hasn't loaded yet. */
+    (function initAnalyticsEvents() {
+      function gcCount(name) {
+        if (typeof window.goatcounter !== 'undefined' && window.goatcounter.count) {
+          window.goatcounter.count({ path: name, event: true });
+        }
+      }
+      document.addEventListener('click', function (e) {
+        var link = e.target.closest && e.target.closest('a');
+        if (!link) return;
+        var href = link.getAttribute('href') || '';
+        if (link.classList.contains('touch__btn')) {
+          if (href.indexOf('mailto:') === 0)          gcCount('contact-email');
+          else if (href.indexOf('linkedin.com') > -1) gcCount('contact-linkedin');
+          else if (href.indexOf('snacksdesign.com') > -1) gcCount('contact-snacks');
+        }
+        if (href === 'https://www.linkedin.com/in/davidmbean/') {
+          gcCount('outbound-david-bean');
+        }
+      });
     })();
   </script>
 
