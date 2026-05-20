@@ -199,7 +199,7 @@
     .hero {
       display: grid;
       grid-template-columns: 1fr;
-      gap: clamp(28px, 5vw, 56px);
+      gap: clamp(16px, 2.5vw, 32px);
       padding: clamp(48px, 8vw, 112px) 0 clamp(40px, 6vw, 80px);
       align-items: center;
     }
@@ -499,7 +499,7 @@
       display: grid;
       grid-template-columns: 1.1fr 1fr;
       gap: clamp(24px, 3.2vw, 48px);
-      align-items: center;
+      align-items: stretch;
       text-decoration: none;
       color: inherit;
       /* Block browser-native link drag so our pointer-based swipe owns
@@ -508,15 +508,27 @@
       -webkit-user-select: none;
               user-select: none;
       -webkit-user-drag: none;
-      /* Soft elevated card unifies image + text. Padding and a generous
-         radius hold the contents; the shadow gives a quiet sense of lift
-         against the cream page without feeling heavy. */
+      /* Allow vertical page scroll but reserve horizontal axis for our
+         pointer-based swipe handler. Without this, iOS Safari can claim
+         the touch and our handlers never see the move. */
+      touch-action: pan-y;
+      /* Soft elevated card unifies image + text. The image bleeds out
+         to the left/top/bottom edges (rounded on the left side only),
+         while text content keeps a generous padded right column. */
       background: #FFFFFF;
       border-radius: clamp(14px, 1.4vw, 18px);
-      padding: clamp(24px, 3vw, 48px);
+      /* No slide padding — image fills the full left column edge-to-edge.
+         Padding lives on the text column instead so copy keeps its breathing room. */
+      padding: 0;
+      overflow: hidden;
       box-shadow:
         0 1px 0 rgba(37, 37, 37, 0.04),
         0 8px 24px rgba(37, 37, 37, 0.05);
+    }
+    /* Right column text content — vertically centered with padded margins. */
+    .car-slide > .case-text {
+      align-self: center;
+      padding: clamp(24px, 3vw, 48px) clamp(24px, 3vw, 48px) clamp(24px, 3vw, 48px) 0;
     }
     .car-slide.is-active {
       opacity: 1;
@@ -551,7 +563,10 @@
     .case-image {
       width: 100%;
       height: 100%;
-      border-radius: var(--radius);
+      /* Rounded on the left only — matches the card's outer radius on
+         the corners that touch the card edge; square on the right
+         where the image meets the text column. */
+      border-radius: clamp(14px, 1.4vw, 18px) 0 0 clamp(14px, 1.4vw, 18px);
       overflow: hidden;
       position: relative;
       /* Meta has a real image, so its panel uses page paper instead of
@@ -560,8 +575,10 @@
       transition: transform .25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow .25s ease;
     }
     .case-image[data-brand="dom-and-tom"]   { background: #f36c29; }
-    .case-image[data-brand="gemini"]        { background: #00c4ed; }
-    .case-image[data-brand="danone"]        { background: #0c5aa6; }
+    .case-image[data-brand="gemini"]        { background: #5393A7; }
+    .case-image[data-brand="bcg"]           { background: #00723F; }
+    .case-image[data-brand="ou-bound"]      { background: #841617; }
+    .case-image[data-brand="aig"]           { background: #00263A; }
     .case-image[data-brand="random-house"]  { background: #2a1a14; }
     .case-image::before {
       content: attr(data-brand);
@@ -598,7 +615,9 @@
     .car-slide                              { --accent: var(--red); }
     .car-slide[data-accent="meta"]          { --accent: #1877F2; }
     .car-slide[data-accent="gemini"]        { --accent: #00a8c4; }
-    .car-slide[data-accent="danone"]        { --accent: #0c5aa6; }
+    .car-slide[data-accent="bcg"]           { --accent: #00723F; }
+    .car-slide[data-accent="ou-bound"]      { --accent: #841617; }
+    .car-slide[data-accent="aig"]           { --accent: #00263A; }
     .car-slide[data-accent="dom-and-tom"]   { --accent: #ed5a1a; }
     .car-slide[data-accent="random-house"]  { --accent: #a35535; }
 
@@ -706,7 +725,7 @@
         position: relative;
         inset: auto;
         grid-template-columns: 1fr;
-        gap: 24px;
+        gap: 0;
         transform: none;
         display: none;
       }
@@ -714,6 +733,17 @@
       .car-slide.is-leaving { display: none; }
       .case-image { aspect-ratio: 4 / 3; height: auto; }
       .case-headline { max-width: 100%; }
+      /* On mobile, the image sits at the TOP of the card — flip rounded
+         corners from "left only" to "top only" so they match the card's
+         outer top edge. Bottom is square where the image meets the text. */
+      .car-slide > .case-image {
+        border-radius: clamp(14px, 1.4vw, 18px) clamp(14px, 1.4vw, 18px) 0 0;
+      }
+      /* Text below the image needs its own padding on all sides since
+         the slide itself has none. */
+      .car-slide > .case-text {
+        padding: clamp(20px, 5vw, 32px);
+      }
     }
 
     /* Selected work — compact, two-column lists, no big titles */
@@ -828,6 +858,11 @@
        they read at a similar visual weight to wide wordmarks. */
     .logo-card[data-brand="facebook"]  img { max-height: 60%; }
     .logo-card[data-brand="instagram"] img { max-height: 60%; }
+    /* Newer additions — OU is a shape-only mark (near-square), AIG is a
+       wordmark with limited internal whitespace, both dominate the card
+       without these caps. BCG ships small with native breathing room. */
+    .logo-card[data-brand="ou-bound"]  img { max-height: 62%; }
+    .logo-card[data-brand="aig"]       img { max-height: 70%; }
 
     /* Milestone cards — solid-filled era markers (Dom & Tom, SNACKS,
        Meta). Same dimensions as logo cards for rhythm; brand-color
@@ -1132,7 +1167,7 @@
         </p>
 
         <p>
-          Outside of Meta, I co-founded <strong><a href="https://snacksdesign.com" target="_blank" rel="noopener">SNACKS</a></strong>, a digital product studio I run with David Bean. SNACKS is where I get to work with founders directly — strategy, design, and engineering for ventures that need a senior team without a 50-person agency. It's active, profitable, and quietly one of the things I'm proudest of.
+          Outside of Meta, I co-founded <strong><a href="https://snacksdesign.com" target="_blank" rel="noopener">SNACKS</a></strong>, a digital product studio I run with David Bean. SNACKS is where I get to work with founders and enterprise intrapreneurs directly — strategy, design, and engineering for ventures that need a senior team without a 50-person agency. It's active, profitable, and quietly one of the things I'm proudest of.
         </p>
 
         <p>
@@ -1164,7 +1199,7 @@
             <li class="marquee__item marquee__item--milestone">
               <span class="logo-card logo-card--milestone" data-brand="dom-and-tom-era">
                 <span class="milestone__name">Dom &amp; Tom</span>
-                <span class="milestone__dates">2010 — 2021</span>
+                <span class="milestone__dates">2010 — 2022</span>
               </span>
             </li>
             <li class="marquee__item">
@@ -1187,6 +1222,15 @@
             </li>
             <li class="marquee__item">
               <span class="logo-card" data-brand="chase"><img src="/logos/chase.jpg" alt="JPMorgan Chase" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="aig"><img src="/logos/aig.png" alt="AIG" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="ou-bound"><img src="/logos/ou.png" alt="University of Oklahoma" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="bcg"><img src="/logos/bcg.webp" alt="Boston Consulting Group" loading="lazy" draggable="false"></span>
             </li>
             <!-- SNACKS era 2019–Present -->
             <li class="marquee__item marquee__item--milestone">
@@ -1222,7 +1266,7 @@
             <li class="marquee__item marquee__item--milestone">
               <span class="logo-card logo-card--milestone" data-brand="dom-and-tom-era">
                 <span class="milestone__name">Dom &amp; Tom</span>
-                <span class="milestone__dates">2010 — 2021</span>
+                <span class="milestone__dates">2010 — 2022</span>
               </span>
             </li>
             <li class="marquee__item">
@@ -1245,6 +1289,15 @@
             </li>
             <li class="marquee__item">
               <span class="logo-card" data-brand="chase"><img src="/logos/chase.jpg" alt="" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="aig"><img src="/logos/aig.png" alt="" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="ou-bound"><img src="/logos/ou.png" alt="" loading="lazy" draggable="false"></span>
+            </li>
+            <li class="marquee__item">
+              <span class="logo-card" data-brand="bcg"><img src="/logos/bcg.webp" alt="" loading="lazy" draggable="false"></span>
             </li>
             <li class="marquee__item marquee__item--milestone">
               <span class="logo-card logo-card--milestone" data-brand="snacks-era">
@@ -1344,15 +1397,15 @@
             </div>
           </a>
 
-          <!-- Slide 3 — Danone -->
-          <a class="car-slide" data-index="2" data-accent="danone" href="/work/danone" aria-label="Danone Tests a New Market — password protected" draggable="false">
-            <div class="case-image" data-brand="danone">
-              <img src="/images/chapters/04-danone.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
+          <!-- Slide 3 — BCG Smart Office Platform -->
+          <a class="car-slide" data-index="2" data-accent="bcg" href="/work/bcg-smart-office" aria-label="BCG Smart Office Platform — password protected" draggable="false">
+            <div class="case-image" data-brand="bcg">
+              <img src="/images/chapters/06-bcg.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
             </div>
             <div class="case-text">
-              <span class="case-num">~2015 · Dom &amp; Tom era</span>
-              <h3 class="case-headline">Danone <em>Tests a New Market</em></h3>
-              <p class="case-sub">How a design team learned to empathize across cultures, categories, and consumers. The brief looked like packaging research; the deeper job was teaching the team to listen before designing.</p>
+              <span class="case-num">2016 · Dom &amp; Tom era</span>
+              <h3 class="case-headline">BCG: Smart Office <em>Platform</em></h3>
+              <p class="case-sub">A space-management platform for Boston Consulting Group's hot-desking offices — check-in, presence, and room availability across an iPad-and-phone fleet on every floor.</p>
               <span class="case-cta">
                 <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
                   <rect x="2" y="6" width="9" height="7" rx="0.8" stroke="currentColor" stroke-width="1.3" fill="none"/>
@@ -1366,15 +1419,59 @@
             </div>
           </a>
 
-          <!-- Slide 4 — Dom & Tom -->
-          <a class="car-slide" data-index="3" data-accent="dom-and-tom" href="/work/dom-and-tom" aria-label="Dom & Tom — A Giant Ball of Clay — password protected" draggable="false">
+          <!-- Slide 4 — OU Bound -->
+          <a class="car-slide" data-index="3" data-accent="ou-bound" href="/work/ou-bound" aria-label="OU Bound — University Onboarding Platform — password protected" draggable="false">
+            <div class="case-image" data-brand="ou-bound">
+              <img src="/images/chapters/07-ou-bound.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
+            </div>
+            <div class="case-text">
+              <span class="case-num">2016 · Dom &amp; Tom era</span>
+              <h3 class="case-headline">OU Bound: Onboarding <em>Future Sooners</em></h3>
+              <p class="case-sub">A mobile app for incoming University of Oklahoma students — timeline to campus, scholarship tracking, progress milestones, and alerts that carry students from admit letter to move-in day.</p>
+              <span class="case-cta">
+                <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
+                  <rect x="2" y="6" width="9" height="7" rx="0.8" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                  <path d="M4 6V3.5a2.5 2.5 0 1 1 5 0V6" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                </svg>
+                Read the chapter
+                <svg class="icon-arrow" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"/>
+                </svg>
+              </span>
+            </div>
+          </a>
+
+          <!-- Slide 5 — AIG Paperless Claim Management -->
+          <a class="car-slide" data-index="4" data-accent="aig" href="/work/aig-claims" aria-label="AIG Paperless Claim Management — password protected" draggable="false">
+            <div class="case-image" data-brand="aig">
+              <img src="/images/chapters/08-aig.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
+            </div>
+            <div class="case-text">
+              <span class="case-num">2015 · Dom &amp; Tom era</span>
+              <h3 class="case-headline">AIG: Paperless <em>Claim Management</em></h3>
+              <p class="case-sub">A tablet-based claim filing experience for AIG Travel Guard that retired the paper form. Step-by-step claim flow with policy lookup, expense capture, and emergency support inline.</p>
+              <span class="case-cta">
+                <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
+                  <rect x="2" y="6" width="9" height="7" rx="0.8" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                  <path d="M4 6V3.5a2.5 2.5 0 1 1 5 0V6" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                </svg>
+                Read the chapter
+                <svg class="icon-arrow" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"/>
+                </svg>
+              </span>
+            </div>
+          </a>
+
+          <!-- Slide 6 — Dom & Tom -->
+          <a class="car-slide" data-index="5" data-accent="dom-and-tom" href="/work/dom-and-tom" aria-label="Dom & Tom — A Giant Ball of Clay — password protected" draggable="false">
             <div class="case-image" data-brand="dom-and-tom">
               <img src="/images/chapters/02-dom-tom.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
             </div>
             <div class="case-text">
-              <span class="case-num">2010 – 2019</span>
-              <h3 class="case-headline">Dom &amp; Tom — A Giant Ball of <em>Clay</em></h3>
-              <p class="case-sub">Molding a digital product agency from first design hire to an 18-person practice. Nine years, four titles, dozens of clients, and the design culture that scaled alongside the business.</p>
+              <span class="case-num">2010 – 2022</span>
+              <h3 class="case-headline">Dom &amp; Tom: A Giant Ball of <em>Clay</em></h3>
+              <p class="case-sub">Molding a digital product agency from first design hire to an 18-person practice. Twelve years, four titles, dozens of clients, and the design culture that scaled alongside the business.</p>
               <span class="case-cta">
                 <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
                   <rect x="2" y="6" width="9" height="7" rx="0.8" stroke="currentColor" stroke-width="1.3" fill="none"/>
@@ -1388,14 +1485,14 @@
             </div>
           </a>
 
-          <!-- Slide 5 — Random House -->
-          <a class="car-slide" data-index="4" data-accent="random-house" href="/work/random-house" aria-label="Random House — Covers & Interiors — password protected" draggable="false">
+          <!-- Slide 7 — Random House -->
+          <a class="car-slide" data-index="6" data-accent="random-house" href="/work/random-house" aria-label="Random House — Covers & Interiors — password protected" draggable="false">
             <div class="case-image" data-brand="random-house">
               <img src="/images/chapters/05-random-house.jpg" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
             </div>
             <div class="case-text">
               <span class="case-num">2005 – 2010 · Triumph Books / Random House</span>
-              <h3 class="case-headline">Random House — <em>Covers &amp; Interiors</em></h3>
+              <h3 class="case-headline">Random House: <em>Covers &amp; Interiors</em></h3>
               <p class="case-sub">Five-plus years designing book covers and interiors at Triumph Books, a Random House imprint. Where the typography habits — the pacing, the hierarchy, the respect for the page — started.</p>
               <span class="case-cta">
                 <svg class="icon-lock" width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
@@ -1420,6 +1517,8 @@
           <button class="car-num" type="button" aria-label="Case study 3" data-go="2">03</button>
           <button class="car-num" type="button" aria-label="Case study 4" data-go="3">04</button>
           <button class="car-num" type="button" aria-label="Case study 5" data-go="4">05</button>
+          <button class="car-num" type="button" aria-label="Case study 6" data-go="5">06</button>
+          <button class="car-num" type="button" aria-label="Case study 7" data-go="6">07</button>
         </div>
       </div>
     </section>
@@ -1529,9 +1628,10 @@
       var moveBuf     = [];               // {t, x} samples for velocity
       var VEL_BUF_MS  = 120;
 
-      var DRAG_MOVED_PX        = 8;
+      var DRAG_MOVED_PX        = 12;      // tolerate iOS finger jitter
       var SWIPE_THRESHOLD_PX   = 50;
       var FLING_THRESHOLD_PX_S = 350;     // a deliberate flick (px / sec)
+      var TAP_TOLERANCE_PX     = 14;      // below this, treat release as a tap
       var DRAG_FOLLOW          = 0.35;
       var DRAG_ROTATE          = 0.02;    // deg per px (~2° at 100px)
       var MAX_ROTATE_DEG       = 4;
@@ -1597,17 +1697,18 @@
         var activeSlide = slides[current];
         clearDragTransform(activeSlide);
 
-        var committed = false;
         if (Math.abs(dx) > SWIPE_THRESHOLD_PX) {
           goTo(current + (dx < 0 ? 1 : -1));
-          committed = true;
         } else if (Math.abs(vx) > FLING_THRESHOLD_PX_S) {
           // Fling: small displacement but quick release — direction follows vx
           goTo(current + (vx < 0 ? 1 : -1));
-          committed = true;
         }
-        // (else: spring back via the cleared transition)
-        void committed;
+        // Release was tap-like — reset dragMoved so the click handler
+        // doesn't suppress the navigation. (Without this, iOS jitter can
+        // set dragMoved=true mid-tap and the click gets swallowed.)
+        if (Math.abs(dx) < TAP_TOLERANCE_PX && Math.abs(vx) < FLING_THRESHOLD_PX_S) {
+          dragMoved = false;
+        }
       }
       carousel.addEventListener('pointerup', endPointerSwipe);
       carousel.addEventListener('pointercancel', function (e) {
