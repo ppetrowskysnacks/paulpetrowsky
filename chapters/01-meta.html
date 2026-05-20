@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Architecting Meta's Support — Paul Petrowsky</title>
-  <meta name="description" content="Five years rebuilding the system behind support across Facebook, Instagram, and Business — flows, primitives, taxonomy, and AI-assisted recovery.">
+  <meta name="description" content="4.8 years designing Meta's support architecture — from individual resolution flows to the AI assistant rolling out to billions of Facebook and Instagram users.">
   <meta name="robots" content="noindex, nofollow">
 
   <meta property="og:type" content="article">
   <meta property="og:title" content="Architecting Meta's Support — Paul Petrowsky">
-  <meta property="og:description" content="Five years rebuilding the system behind support across Facebook, Instagram, and Business.">
+  <meta property="og:description" content="4.8 years designing Meta's support architecture — pattern system, cross-org consolidation, AI-native resolution.">
 
   <meta name="theme-color" content="#F6F6F8">
 
@@ -50,7 +50,37 @@
       --nav-h: 72px;
       --frame: 10px;
       --frame-color: rgba(37, 37, 37, 0.07);
+
+      /* Per-chapter accent. Each chapter sets --chapter-accent on the
+         body (e.g. body.chapter--meta) to take over the nav and hero
+         band. Defaults to ink when no chapter accent is set. */
+      --chapter-accent: var(--fg);
     }
+
+    /* Chapter brand accents — pick by adding body.chapter--<slug>.
+       For solid-color chapters --chapter-accent fills the nav + hero.
+       For gradient chapters the hero overrides --chapter-accent with
+       a linear-gradient and the nav uses --chapter-nav-bg. */
+    body.chapter--meta {
+      /* Pastel wash sampled directly from the Meta press image so the
+         circular crop's background blends seamlessly into the hero.
+         Warm peach/pink on the left → lavender center → cool light
+         blue on the right → faint mint at the bottom right. */
+      --chapter-accent:
+        radial-gradient(75% 95% at 5%  35%, #FEF1E9 0%, transparent 60%),
+        radial-gradient(65% 80% at 20% 70%, #FBEDED 0%, transparent 60%),
+        radial-gradient(55% 70% at 45% 55%, #EEE6F5 0%, transparent 70%),
+        radial-gradient(70% 95% at 90% 30%, #DBEAFD 0%, transparent 70%),
+        radial-gradient(55% 70% at 95% 95%, #DDF3F0 0%, transparent 60%),
+        #E5EAF5;                   /* desaturated pale base */
+      --chapter-nav-bg: var(--bg); /* nav stays cream/white */
+      --chapter-ink: var(--fg);    /* dark text on the pastel wash */
+      --chapter-cta: #1877F2;      /* Meta blue, matches phone bezel */
+    }
+    body.chapter--gemini        { --chapter-accent: #00a8c4; --chapter-ink: #fff; }
+    body.chapter--danone        { --chapter-accent: #0c5aa6; --chapter-ink: #fff; }
+    body.chapter--dom-and-tom   { --chapter-accent: #ed5a1a; --chapter-ink: #fff; }
+    body.chapter--random-house  { --chapter-accent: #a35535; --chapter-ink: #fff; }
 
     *, *::before, *::after { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
@@ -83,11 +113,15 @@
       border-right: var(--frame) solid var(--frame-color);
     }
 
-    /* ───────── Nav (matches index.html) ───────── */
+    /* ───────── Nav ─────────
+       Picks up the chapter accent color so the top band reads as one
+       branded surface with the hero below. Chapters with --chapter-nav-bg
+       (gradient/light chapters) get a sampled solid that matches the
+       gradient's leading edge. */
     .site-nav {
       position: sticky; top: 0; z-index: 10;
-      background: var(--bg);
-      border-bottom: 1px solid var(--rule);
+      background: var(--chapter-nav-bg, var(--chapter-accent));
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     }
     .site-nav__row {
       max-width: var(--max-w);
@@ -119,13 +153,13 @@
       font-size: 13px;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      color: var(--soft);
+      color: rgba(255, 255, 255, 0.78);
       text-decoration: none;
       border-bottom: 1px solid transparent;
       padding-bottom: 2px;
       transition: color .15s ease, border-color .15s ease;
     }
-    .site-nav__links a:hover { color: var(--red); border-bottom-color: var(--red); }
+    .site-nav__links a:hover { color: #fff; border-bottom-color: #fff; }
 
     /* ───────── Layout ───────── */
     main {
@@ -134,14 +168,18 @@
       padding: 0 var(--pad);
     }
 
-    /* ───────── Case hero ─────────
-       Dark band that sits flush under the nav. Cover image with a quiet
-       gradient overlay, headline + subtitle stacked left, eyebrow above. */
+    /* ───────── Case hero — always visible, full viewport width ─────────
+       Title + public teaser copy + Request access button. Background
+       image slot sits behind a quiet gradient overlay. The hero lives
+       OUTSIDE <main> so it can extend edge-to-edge; z-index: 6 puts it
+       above the fixed page frame so the dark band covers the frame's
+       left/right rules cleanly. */
     .case-hero {
       position: relative;
-      margin: 0 calc(var(--pad) * -1);
+      z-index: 6;
+      width: 100%;
       padding: clamp(80px, 12vw, 180px) var(--pad) clamp(64px, 10vw, 140px);
-      background: var(--fg);
+      background: var(--chapter-accent);
       color: #fff;
       overflow: hidden;
       isolation: isolate;
@@ -149,7 +187,7 @@
     .case-hero__bg {
       position: absolute; inset: 0;
       z-index: -1;
-      background: #0c0d10;
+      background: transparent;
     }
     .case-hero__bg img {
       width: 100%; height: 100%;
@@ -160,72 +198,127 @@
     .case-hero__bg::after {
       content: '';
       position: absolute; inset: 0;
+      /* Very subtle depth — slightly deepens the bottom edge so the
+         hero feels grounded against the cream sections below. When a
+         bg image is dropped in, expand this to add legibility scrim. */
       background:
-        linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.0) 70%, rgba(0,0,0,0.35) 100%),
-        linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 60%, rgba(0,0,0,0.0) 100%);
+        linear-gradient(180deg, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.0) 70%, rgba(0,0,0,0.18) 100%);
     }
     .case-hero__inner {
-      max-width: 880px;
+      max-width: 1280px;
       margin: 0 auto;
       position: relative;
-    }
-    .case-hero__eyebrow {
-      display: inline-flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
       align-items: center;
-      gap: 12px;
-      font-family: var(--ddc);
-      font-size: 12px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.7);
-      margin-bottom: 28px;
+      gap: clamp(36px, 5vw, 80px);
     }
-    .case-hero__eyebrow .num { color: var(--red); }
+    .case-hero__copy { min-width: 0; }
+    /* Stack below 960px — copy first, circle visual beneath. */
+    @media (max-width: 960px) {
+      .case-hero__inner {
+        grid-template-columns: 1fr;
+        gap: clamp(32px, 6vw, 56px);
+      }
+    }
     .case-hero__back {
       font-family: var(--ddc);
       font-size: 11px;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.55);
+      color: rgba(255,255,255,0.75);
       text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 36px;
+      margin-bottom: 32px;
       transition: color .15s ease;
     }
     .case-hero__back:hover { color: #fff; }
+    .case-hero__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.78);
+      margin-bottom: 24px;
+    }
+    /* On a color hero the chapter "01" reads stronger in white than in
+       red. Keep red as the fallback for chapters that stick with ink. */
+    .case-hero__eyebrow .num { color: #fff; font-weight: 500; }
     .case-hero h1 {
       font-family: var(--body);
       font-weight: 500;
-      font-size: clamp(38px, 5.6vw, 76px);
+      font-size: clamp(38px, 4.8vw, 68px);
       line-height: 1.05;
       letter-spacing: -0.02em;
       margin: 0 0 28px;
-      max-width: 22ch;
+      max-width: 14ch;
       color: #fff;
     }
     .case-hero h1 em {
-      font-style: italic;
-      color: #fff;
-      opacity: 0.7;
+      /* Match the home-carousel headline: em is treated identically
+         to surrounding text (no italic, no color shift). */
+      font-style: normal;
+      color: inherit;
+      opacity: 1;
     }
-    .case-hero__sub {
+    .case-hero__teaser {
       font-family: var(--body);
-      font-size: clamp(17px, 1.4vw, 21px);
+      font-size: clamp(16px, 1.3vw, 19px);
       line-height: 1.55;
-      color: rgba(255,255,255,0.78);
-      max-width: 58ch;
-      margin: 0;
+      color: rgba(255,255,255,0.82);
+      max-width: 50ch;
+      margin: 0 0 36px;
+    }
+    .case-hero__teaser strong { font-weight: 500; color: #fff; }
+
+    .case-hero__cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+      padding: 16px 26px;
+      /* Defaults to ink (works on any chapter); chapters override to
+         their brand color via --chapter-cta below. */
+      background: var(--chapter-cta, var(--fg));
+      color: #fff;
+      border: 0;
+      border-radius: 999px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color .15s ease, transform .15s ease;
+    }
+    .case-hero__cta:hover { background: var(--fg); color: #fff; }
+    .case-hero__cta .lock {
+      width: 13px;
+      height: 14px;
+    }
+    .case-hero__cta-meta {
+      margin-top: 14px;
+      font-family: var(--ddc);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
     }
     .case-hero__meta {
-      margin-top: 40px;
+      margin-top: 48px;
       display: flex;
       flex-wrap: wrap;
       gap: clamp(20px, 3vw, 40px);
       font-family: var(--body);
       font-size: 13px;
       color: rgba(255,255,255,0.55);
+      padding-top: 32px;
+      border-top: 1px solid rgba(255,255,255,0.14);
     }
     .case-hero__meta dt {
       font-family: var(--ddc);
@@ -241,7 +334,84 @@
       letter-spacing: -0.005em;
     }
 
-    /* ───────── Case sections ───────── */
+    /* Hide the Request-access CTA entirely — the gate modal now appears
+       automatically when the page is locked, so the button is redundant. */
+    .case-hero__cta,
+    .case-hero__cta-meta { display: none !important; }
+
+    /* ───────── Hero visual — portrait card ─────────
+       The chapter's primary image, cropped to a portrait card. Sits
+       in the right column of the hero alongside the title + teaser. */
+    .case-hero__visual {
+      width: clamp(260px, 32vw, 380px);
+      aspect-ratio: 3 / 4;
+      margin: 0 auto;            /* center inside the right column */
+      border-radius: 20px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.04);
+      box-shadow:
+        0 24px 60px rgba(37, 37, 37, 0.12),
+        0 8px 22px rgba(37, 37, 37, 0.06);
+    }
+    .case-hero__visual img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      border-radius: inherit;
+    }
+    @media (max-width: 960px) {
+      .case-hero__visual {
+        width: clamp(240px, 60vw, 340px);
+      }
+    }
+
+    /* ───────── Gated content — everything below the hero ─────────
+       Always rendered into the DOM so visitors see the blurred preview
+       behind the password gate. The gate overlay's backdrop-filter
+       handles the blur; pointer events are blocked while locked so
+       clicks pass through to the modal. */
+    body.is-locked .gated { pointer-events: none; user-select: none; }
+
+    /* ───────── Lede block — the metric one-liner that opens the case ───────── */
+    .case-lede {
+      padding: clamp(64px, 8vw, 120px) 0 clamp(32px, 4vw, 48px);
+      border-bottom: 1px solid var(--rule);
+    }
+    .case-lede__inner {
+      max-width: var(--col-w);
+      margin: 0 auto;
+    }
+    .case-lede h2 {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: clamp(26px, 3.2vw, 40px);
+      line-height: 1.2;
+      letter-spacing: -0.015em;
+      color: var(--fg);
+      margin: 0 0 36px;
+      max-width: 32ch;
+    }
+    .case-lede h2 strong { font-weight: 500; color: var(--red); }
+    .case-lede__intro p {
+      margin: 0 0 1.05em;
+      font-size: clamp(18px, 1.45vw, 20px);
+      line-height: 1.6;
+      color: var(--fg);
+      max-width: 64ch;
+    }
+    .case-lede__intro p:last-child { margin-bottom: 0; }
+    .case-lede__intro a {
+      color: var(--fg);
+      text-decoration: none;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 1px;
+      transition: color .15s ease, border-color .15s ease;
+    }
+    .case-lede__intro a:hover { color: var(--red); border-bottom-color: var(--red); }
+
+    /* ───────── Act sections ───────── */
     .case-section {
       padding: clamp(72px, 9vw, 128px) 0;
       border-bottom: 1px solid var(--rule);
@@ -259,10 +429,11 @@
       color: var(--muted);
       margin-bottom: 20px;
       display: inline-flex;
-      align-items: center;
+      align-items: baseline;
       gap: 14px;
     }
     .case-section__label .num { color: var(--red); }
+    .case-section__label .era { color: var(--muted); }
     .case-section h2 {
       font-family: var(--body);
       font-weight: 500;
@@ -273,7 +444,17 @@
       max-width: 22ch;
       color: var(--fg);
     }
-    .case-section h2 em { font-style: italic; color: var(--soft); }
+    .case-section h3 {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: clamp(20px, 1.8vw, 26px);
+      line-height: 1.25;
+      letter-spacing: -0.015em;
+      margin: 40px 0 16px;
+      color: var(--fg);
+    }
+    .case-section h2 em,
+    .case-section h3 em { font-style: italic; color: var(--soft); }
 
     .case-prose p {
       margin: 0 0 1.05em;
@@ -293,6 +474,49 @@
       transition: color .15s ease, border-color .15s ease;
     }
     .case-prose a:hover { color: var(--red); border-bottom-color: var(--red); }
+
+    /* Bullet list inside Act bodies — clean dash bullets. */
+    .case-prose ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1.4em;
+      max-width: 64ch;
+    }
+    .case-prose ul li {
+      position: relative;
+      padding: 6px 0 6px 28px;
+      font-size: clamp(17px, 1.35vw, 19px);
+      line-height: 1.55;
+    }
+    .case-prose ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.78em;
+      width: 14px;
+      height: 1.5px;
+      background: var(--red);
+    }
+    .case-prose ul li strong { font-weight: 500; }
+
+    /* ───────── Architecture progression line ─────────
+       A typographic emphasis line that visualizes the layered
+       progression (Guidelines → governance → code → AI-first). */
+    .case-progression {
+      margin: 1.4em 0 1.4em !important;
+      padding: 18px 0 18px;
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--body);
+      font-size: clamp(18px, 1.5vw, 22px) !important;
+      line-height: 1.4;
+      letter-spacing: -0.005em;
+      color: var(--fg);
+      max-width: 64ch;
+    }
+    .case-progression strong {
+      font-weight: 500;
+    }
 
     /* ───────── Inline pull quote ───────── */
     .case-pull {
@@ -319,7 +543,7 @@
       color: var(--muted);
     }
 
-    /* ───────── Feature image / video ───────── */
+    /* ───────── Figure / image ───────── */
     .case-figure {
       margin: clamp(40px, 5vw, 64px) 0;
     }
@@ -342,7 +566,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: rgba(255,255,255,0.35);
+      color: rgba(255,255,255,0.4);
       font-family: var(--ddc);
       font-size: 11px;
       letter-spacing: 0.16em;
@@ -359,204 +583,175 @@
       max-width: 64ch;
     }
 
-    /* ───────── 2-up gallery ───────── */
-    .case-gallery {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
+    /* ───────── Surface viz — many surfaces → one MAIBA tray ─────────
+       Inspired by Paul's Advertiser Support Surface Sprint slide:
+       scattered surface pills on the left, a tangled connector line
+       through the middle, and the unified MAIBA tray on the right. */
+    .case-system-viz {
       margin: clamp(40px, 5vw, 64px) 0;
     }
-    .case-gallery figure { margin: 0; }
-    .case-gallery .case-figure__frame {
-      aspect-ratio: 4 / 3;
-    }
-    .case-gallery figcaption {
-      margin-top: 10px;
-      font-family: var(--body);
-      font-size: 13px;
-      color: var(--muted);
-    }
-    @media (max-width: 720px) {
-      .case-gallery { grid-template-columns: 1fr; }
-    }
-
-    /* ───────── Process steps ───────── */
-    .case-steps {
-      margin: clamp(40px, 5vw, 64px) 0;
-      list-style: none;
-      padding: 0;
-      counter-reset: step;
+    .case-system-viz__board {
+      position: relative;
+      background:
+        radial-gradient(60% 70% at 15% 30%, #F0EAFC 0%, transparent 70%),
+        radial-gradient(60% 70% at 85% 70%, #E8EEFB 0%, transparent 70%),
+        #F4F1FB;
+      border-radius: var(--radius);
+      padding: clamp(28px, 4vw, 48px);
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: clamp(20px, 3vw, 36px);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, auto);
+      align-items: center;
+      gap: clamp(16px, 2vw, 28px);
+      overflow: hidden;
+      min-height: 460px;
     }
-    .case-steps li {
-      counter-increment: step;
+    .case-system-viz__pills {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      align-items: flex-start;
+      gap: 12px;
     }
-    .case-steps li::before {
-      content: counter(step, decimal-leading-zero);
+    .surface-pill {
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: clamp(14px, 1.2vw, 16px);
+      line-height: 1.2;
+      padding: 10px 20px;
+      border-radius: 999px;
+      background: rgba(122, 96, 218, 0.18);
+      color: #3F2EA1;
+      white-space: nowrap;
+    }
+    .surface-pill--alt {
+      background: rgba(100, 152, 220, 0.22);
+      color: #1B4D8A;
+    }
+    .case-system-viz__connector {
+      width: 100%;
+      max-width: 320px;
+      height: auto;
+      color: var(--fg);
+      align-self: center;
+      justify-self: center;
+    }
+    .case-system-viz__solution {
+      max-width: clamp(180px, 22vw, 240px);
+      align-self: center;
+      justify-self: end;
+    }
+    .case-system-viz__solution img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 18px;
+      box-shadow:
+        0 20px 50px rgba(37, 37, 37, 0.14),
+        0 6px 18px rgba(37, 37, 37, 0.08);
+    }
+    @media (max-width: 720px) {
+      .case-system-viz__board {
+        grid-template-columns: 1fr;
+        gap: clamp(20px, 4vw, 32px);
+        min-height: 0;
+      }
+      .case-system-viz__connector {
+        transform: rotate(90deg);
+        max-width: 200px;
+        margin: 0 auto;
+      }
+      .case-system-viz__solution {
+        justify-self: center;
+      }
+    }
+
+    /* ───────── Impact table — "What this added up to" ───────── */
+    .impact-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: clamp(32px, 4vw, 48px) 0 24px;
+      font-family: var(--body);
+      font-size: clamp(14px, 1.1vw, 16px);
+    }
+    .impact-table thead th {
+      text-align: left;
+      padding: 14px 16px;
       font-family: var(--ddc);
       font-size: 11px;
       letter-spacing: 0.16em;
-      color: var(--red);
-      line-height: 1;
-      margin-bottom: 6px;
-    }
-    .case-steps h3 {
-      font-family: var(--body);
-      font-weight: 500;
-      font-size: clamp(17px, 1.3vw, 19px);
-      line-height: 1.3;
-      letter-spacing: -0.01em;
-      margin: 0;
-    }
-    .case-steps p {
-      font-family: var(--body);
-      font-size: clamp(14px, 1.05vw, 15px);
-      line-height: 1.55;
+      text-transform: uppercase;
       color: var(--muted);
-      margin: 0;
+      font-weight: 400;
+      border-bottom: 1px solid var(--rule);
     }
-    @media (max-width: 720px) {
-      .case-steps { grid-template-columns: 1fr; gap: 24px; }
-    }
-
-    /* ───────── Metrics row ───────── */
-    .case-metrics {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      margin: clamp(32px, 4vw, 48px) 0 0;
-    }
-    .case-metric {
-      border: 1px solid var(--rule);
-      border-radius: var(--radius);
-      padding: clamp(20px, 2vw, 28px);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      background: rgba(255,255,255,0.35);
-    }
-    .case-metric .num {
-      font-family: var(--body);
-      font-weight: 500;
-      font-size: clamp(32px, 4vw, 48px);
-      line-height: 1;
-      letter-spacing: -0.02em;
-      color: var(--fg);
-    }
-    .case-metric .label {
-      font-family: var(--body);
-      font-size: 13px;
-      color: var(--muted);
+    .impact-table tbody td {
+      padding: 16px;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
       line-height: 1.45;
     }
-    @media (max-width: 720px) {
-      .case-metrics { grid-template-columns: 1fr; }
-    }
-
-    /* ───────── Divider with label ───────── */
-    .case-divider {
-      margin: clamp(40px, 5vw, 56px) 0;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .case-divider::before,
-    .case-divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--rule);
-    }
-    .case-divider span {
+    .impact-table tbody tr:last-child td { border-bottom: 0; }
+    .impact-table td.year {
       font-family: var(--ddc);
-      font-size: 11px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.12em;
       color: var(--muted);
+      width: 80px;
+      white-space: nowrap;
     }
-
-    /* ───────── Up next ───────── */
-    .case-next {
-      background: var(--fg);
-      color: #fff;
-      margin: 0 calc(var(--pad) * -1);
-      padding: clamp(56px, 7vw, 96px) var(--pad);
+    .impact-table td.project {
+      width: 42%;
+      color: var(--fg);
     }
-    .case-next__inner {
-      max-width: var(--col-w);
-      margin: 0 auto;
+    .impact-table td.impact {
+      color: var(--fg);
+      font-weight: 500;
     }
-    .case-next__label {
-      font-family: var(--ddc);
-      font-size: 11px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.5);
-      margin-bottom: 16px;
-    }
-    .case-next__link {
-      display: grid;
-      grid-template-columns: 140px 1fr auto;
-      gap: 24px;
-      align-items: center;
-      padding: 20px;
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: var(--radius);
-      text-decoration: none;
-      color: inherit;
-      transition: border-color .25s ease, background-color .25s ease, transform .25s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-    .case-next__link:hover {
-      border-color: rgba(255,255,255,0.5);
-      background: rgba(255,255,255,0.05);
-      transform: translateY(-2px);
-    }
-    .case-next__thumb {
-      aspect-ratio: 4 / 3;
-      background: rgba(255,255,255,0.06);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .case-next__thumb img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-    }
-    .case-next__head {
+    .impact-total {
+      margin: 0;
+      padding: clamp(20px, 2vw, 28px) 0 0;
+      border-top: 2px solid var(--fg);
       font-family: var(--body);
       font-weight: 500;
-      font-size: clamp(18px, 1.4vw, 22px);
-      line-height: 1.3;
-      letter-spacing: -0.01em;
-      color: #fff;
-      margin: 0;
+      font-size: clamp(18px, 1.45vw, 20px);
+      line-height: 1.4;
+      color: var(--fg);
     }
-    .case-next__head .lock {
-      width: 12px;
-      height: 12px;
-      margin-right: 8px;
-      vertical-align: -1px;
-      opacity: 0.6;
-    }
-    .case-next__arrow {
-      width: 22px;
-      height: 22px;
-      color: rgba(255,255,255,0.6);
-      transition: transform .25s cubic-bezier(0.2, 0.8, 0.2, 1), color .2s ease;
-    }
-    .case-next__link:hover .case-next__arrow {
-      transform: translateX(4px);
-      color: #fff;
-    }
-    @media (max-width: 540px) {
-      .case-next__link {
-        grid-template-columns: 1fr auto;
+    .impact-total strong { color: var(--red); font-weight: 500; }
+    @media (max-width: 720px) {
+      /* Stack the table into card rows on narrow screens. */
+      .impact-table thead { display: none; }
+      .impact-table tbody, .impact-table tr, .impact-table td { display: block; width: 100%; }
+      .impact-table tr {
+        padding: 18px 0;
+        border-bottom: 1px solid var(--rule);
       }
-      .case-next__thumb { display: none; }
+      .impact-table tbody tr:last-child { border-bottom: 0; }
+      .impact-table tbody td { padding: 4px 0; border-bottom: 0; }
+      .impact-table td.year { width: auto; }
+      .impact-table td.project { width: auto; font-weight: 500; }
+    }
+
+    /* ───────── Closing CTA at end of "Growth + what's next" ───────── */
+    .case-cta {
+      margin-top: clamp(32px, 4vw, 48px);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--body);
+      font-weight: 500;
+      font-size: 15px;
+      letter-spacing: 0.01em;
+      padding: 14px 24px;
+      background: var(--fg);
+      color: #fff;
+      border-radius: 999px;
+      text-decoration: none;
+      transition: background-color .15s ease;
+    }
+    .case-cta:hover { background: var(--red); color: #fff; }
+    .case-cta .arrow {
+      width: 16px;
+      height: 16px;
     }
 
     /* ───────── Footer (mirrors index.html .foot) ───────── */
@@ -585,30 +780,121 @@
     .foot__meta a:hover { color: var(--red); }
     .foot__meta .heart { color: var(--red); }
 
-    /* ───────── Password gate ─────────
-       Full-viewport overlay that sits over the page until the visitor
-       enters the shared password. The gate uses sessionStorage so it
-       only prompts once per browser session.
-       To change the password: edit GATE_PW in the script below. */
+    /* ───────── Chapter — Meta (gradient / light mode) ─────────
+       Override the dark-band defaults: pastel gradient on the hero,
+       dark text throughout, lighter nav. Other chapters keep the
+       default dark-band styling. */
+    body.chapter--meta .site-nav__links a {
+      color: var(--soft);
+    }
+    body.chapter--meta .site-nav__links a:hover {
+      color: var(--red);
+      border-bottom-color: var(--red);
+    }
+    body.chapter--meta .case-hero {
+      color: var(--fg);
+    }
+    body.chapter--meta .case-hero__bg::after {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.0) 75%, rgba(0,0,0,0.05) 100%);
+    }
+    body.chapter--meta .case-hero h1 {
+      color: var(--fg);
+    }
+    body.chapter--meta .case-hero h1 em {
+      color: inherit;
+      opacity: 1;
+    }
+    body.chapter--meta .case-hero__teaser {
+      color: var(--soft);
+    }
+    body.chapter--meta .case-hero__teaser strong {
+      color: var(--fg);
+    }
+    body.chapter--meta .case-hero__back {
+      color: var(--muted);
+    }
+    body.chapter--meta .case-hero__back:hover { color: var(--fg); }
+    body.chapter--meta .case-hero__eyebrow {
+      color: var(--muted);
+    }
+    body.chapter--meta .case-hero__eyebrow .num { color: var(--fg); }
+    body.chapter--meta .case-hero__cta-meta { color: var(--muted); }
+    body.chapter--meta .case-hero__meta {
+      color: var(--muted);
+      border-top: 1px solid rgba(37, 37, 37, 0.16);
+    }
+    body.chapter--meta .case-hero__meta dt { color: var(--muted); }
+    body.chapter--meta .case-hero__meta dd { color: var(--fg); }
+    /* CTA hover: keep red → fg-dark inversion for legibility on pastel */
+    body.chapter--meta .case-hero__cta:hover {
+      background: var(--fg);
+      color: #fff;
+    }
+    /* Phone feature — Meta-blue bezel rendered as a box-shadow ring
+       rather than a CSS border so the container's aspect ratio stays
+       exact (no layout encroach, no inner crop of the GIF). */
+    body.chapter--meta .case-hero__feature {
+      background: transparent;
+      border: 0;
+      border-radius: 34px;
+      box-shadow:
+        0 0 0 5px #1877F2,                            /* phone bezel */
+        0 22px 56px rgba(24, 119, 242, 0.22),
+        0 8px 20px rgba(37, 37, 37, 0.10);
+    }
+    body.chapter--meta .case-hero__feature img {
+      border-radius: 34px;        /* match the container exactly */
+    }
+
+    /* ───────── Password gate — full-viewport frosted overlay ─────────
+       Renders automatically while body.is-locked, blurring the page
+       content behind it. Removing is-locked dissolves the overlay and
+       reveals the page in one motion. Persists unlock via sessionStorage. */
     .gate {
       position: fixed;
       inset: 0;
       z-index: 1000;
-      background: var(--bg);
-      display: flex;
+      background: rgba(246, 246, 248, 0.45);
+      display: none;
       align-items: center;
       justify-content: center;
       padding: 24px;
+      backdrop-filter: blur(16px) saturate(140%);
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+      transition: opacity .35s ease, backdrop-filter .35s ease;
     }
-    .gate__inner {
-      max-width: 420px;
+    body.is-locked .gate { display: flex; }
+    .gate__card {
+      max-width: 460px;
       width: 100%;
+      background: var(--bg);
+      border-radius: 14px;
+      padding: clamp(28px, 4vw, 44px);
       text-align: center;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+      position: relative;
     }
+    .gate__close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: 0;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      border-radius: 50%;
+      transition: color .15s ease, background-color .15s ease;
+    }
+    .gate__close:hover { color: var(--fg); background: var(--rule); }
     .gate__bolt {
-      width: 56px;
-      height: 56px;
-      margin: 0 auto 24px;
+      width: 48px;
+      height: 48px;
+      margin: 4px auto 22px;
       color: var(--red);
     }
     .gate__bolt svg { width: 100%; height: 100%; display: block; }
@@ -618,29 +904,29 @@
       letter-spacing: 0.16em;
       text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .gate__title {
       font-family: var(--body);
       font-weight: 500;
-      font-size: clamp(28px, 3.4vw, 36px);
+      font-size: clamp(24px, 2.8vw, 30px);
       letter-spacing: -0.02em;
       line-height: 1.15;
       color: var(--fg);
-      margin: 0 0 12px;
+      margin: 0 0 10px;
     }
     .gate__lede {
       font-family: var(--body);
       font-size: 15px;
       color: var(--soft);
       max-width: 36ch;
-      margin: 0 auto 32px;
+      margin: 0 auto 26px;
       line-height: 1.5;
     }
     .gate__form {
       display: flex;
       gap: 8px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .gate__form input {
       flex: 1;
@@ -675,48 +961,410 @@
       font-family: var(--body);
       font-size: 13px;
       color: var(--muted);
-      margin: 0 0 24px;
+      margin: 0;
       min-height: 1.4em;
     }
-    .gate__hint a { color: var(--fg); border-bottom: 1px solid var(--rule); padding-bottom: 1px; text-decoration: none; }
-    .gate__hint a:hover { color: var(--red); border-bottom-color: var(--red); }
-    .gate__back {
-      font-family: var(--ddc);
-      font-size: 11px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--muted);
+    .gate__hint a {
+      color: var(--fg);
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 1px;
       text-decoration: none;
-      transition: color .15s ease;
     }
-    .gate__back:hover { color: var(--red); }
-
-    /* Hide page content while locked. Use visibility (not display) so
-       the layout doesn't reflow on unlock. */
-    body.is-locked .site-nav,
-    body.is-locked .frame,
-    body.is-locked main,
-    body.is-locked .foot { visibility: hidden; }
-    body:not(.is-locked) .gate { display: none; }
+    .gate__hint a:hover { color: var(--red); border-bottom-color: var(--red); }
   </style>
 </head>
-<body class="is-locked">
+<body class="is-locked chapter--meta">
 
-  <!-- ───────── Password gate ───────── -->
-  <div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
-    <div class="gate__inner">
-      <div class="gate__bolt" aria-hidden="true">
-        <!-- Same lightning bolt mark used in the favicon -->
-        <svg viewBox="0 0 144 144" xmlns="http://www.w3.org/2000/svg">
-          <g transform="translate(36 6)">
-            <path d="M0.136 78.77C-0.606 81.38 1.808 83.80 4.410 83.05L35.246 75.61C37.847 75.05 40.261 77.28 39.519 79.89L27.445 127.55C26.333 131.64 32.273 133.88 34.133 129.97L71.656 52.15C72.957 49.36 70.355 46.19 67.382 47.31L40.821 53.82C38.037 54.76 35.435 51.96 36.365 49.17L52.154 6.91C52.708 4.86 51.224 2.63 48.993 2.25L22.985 0.02C21.314 -0.17 19.642 0.95 19.271 2.63L0.136 78.77Z" fill="currentColor"/>
-          </g>
-        </svg>
+  <!-- ───────── Nav ───────── -->
+  <nav class="site-nav" id="nav" aria-label="Primary">
+    <div class="site-nav__row">
+      <a href="/" class="logo" aria-label="Paul Petrowsky — home">SNACKS</a>
+      <div class="site-nav__links">
+        <a href="/#work">Work</a>
+        <a href="https://www.linkedin.com/in/ppetrowsky" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="/#contact">Contact</a>
       </div>
-      <div class="gate__eyebrow">Private Chapter</div>
-      <h1 class="gate__title" id="gate-title">Password protected</h1>
+    </div>
+  </nav>
+
+  <div class="frame" aria-hidden="true"></div>
+
+  <!-- ───────── Public hero — visible to everyone, full viewport width ───────── -->
+  <section class="case-hero" id="top" aria-labelledby="case-title">
+      <div class="case-hero__bg" aria-hidden="true">
+        <!-- Hero background image. Drop a wide, atmospheric image at the
+             path below to bring it forward. The dark gradient overlay
+             handles legibility. Suggested 2400×1350 or larger. -->
+        <!-- <img src="/images/chapters/01-meta-hero.jpg" alt="" loading="eager"> -->
+      </div>
+      <div class="case-hero__inner">
+        <div class="case-hero__copy">
+          <div class="case-hero__eyebrow">
+            <span class="num">Chapter 01</span>
+            <span>Meta · 2021 — Present</span>
+          </div>
+          <h1 id="case-title">
+            Architecting Meta's <em>Support</em>
+          </h1>
+          <p class="case-hero__teaser">
+            <strong>A five year focus on Integrity and support</strong> — from individual resolution flows to the AI assistant rolling out to billions of <strong>Facebook</strong> and <strong>Instagram</strong> users. Principles, frameworks, cross-org collaboration and overall perseverance made it possible.
+          </p>
+          <dl class="case-hero__meta">
+            <div>
+              <dt>Role</dt>
+              <dd>Principal Product Designer</dd>
+            </div>
+            <div>
+              <dt>Team</dt>
+              <dd>Central Integrity &amp; Support</dd>
+            </div>
+            <div>
+              <dt>Years</dt>
+              <dd>2021 — Present</dd>
+            </div>
+          </dl>
+        </div>
+
+        <!-- Right column — circular crop of the Meta press visual
+             (same image used on the home carousel card). object-fit:
+             cover centers the woman + chips and lets the outer
+             gradient bleed past the circle. -->
+        <div class="case-hero__visual">
+          <img src="/images/chapters/01-meta.jpg" alt="One user surrounded by multiple support touchpoints — Support, search, message, alert, and 'Profile has no issues' — converging from Facebook, Instagram, and Meta Business tools" loading="eager">
+        </div>
+      </div>
+    </section>
+
+  <main>
+
+    <!-- ───────── Gated body — hidden until unlock ───────── -->
+    <div class="gated">
+
+      <!-- ───────── Lede block ───────── -->
+      <section class="case-lede" aria-labelledby="lede-title">
+        <div class="case-lede__inner">
+          <h2 id="lede-title">
+            <strong>A five year focus on Integrity and support</strong> — from individual resolution flows to the AI assistant rolling out to billions of Facebook and Instagram users. Principles, frameworks, cross-org collaboration and overall perseverance made it possible.
+          </h2>
+          <div class="case-lede__intro">
+            <p>
+              I joined <a href="https://www.meta.com/" target="_blank" rel="noopener">Meta</a> in October 2021 as a Product Designer in support. Almost five years in, the work has grown from designing individual flows to designing the system that designs them — the architecture behind Meta's resolution layer, which compounded into the <a href="https://about.fb.com/news/2025/12/making-it-easier-to-access-account-support-on-facebook-and-instagram/" target="_blank" rel="noopener">Unified Support Home</a> and the Meta AI Support Assistant now rolling out globally on Facebook and Instagram.
+            </p>
+            <p>
+              The work compounds: each pattern made the next faster to design; each cross-org alignment unblocked the next workstream.
+            </p>
+            <p>
+              The journey had a shape: <strong>hard guidelines and playbooks first, then governance frameworks, then the patterns codified in the product itself.</strong> Each layer of formalization earned the next — and that progression is what made the leapfrog to AI-first support possible. When the resolution patterns are already in code, an AI assistant doesn't bolt onto features. It orchestrates the system.
+            </p>
+            <p>
+              Here's how it got built — one layer at a time, across three eras.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────── Act 1 ───────── -->
+      <section class="case-section" aria-labelledby="act1-title">
+        <div class="case-section__inner">
+          <div class="case-section__label">
+            <span class="num">Act 1</span>
+            <span>The framework</span>
+            <span class="era">· 2022 — 2023</span>
+          </div>
+          <h2 id="act1-title">A playbook, not a feature.</h2>
+
+          <div class="case-prose">
+            <p>
+              Advertiser support was a patchwork. Same problem, three different flows depending on the surface. So I built a <strong>pattern framework</strong> — not a feature. It wasn't something users saw; it was a <em>playbook</em> other designers could use to make the same problem look the same everywhere.
+            </p>
+            <p>
+              I shipped the first two implementations: a high-volume mobile resolution surface that drove a stat-sig increase in users self-resolving and reached 100% rollout, and the ad-rejection resolution experience that ships in production across the advertiser surface today. Stat-sig wins on both active-advertiser and edit-approval metrics.
+            </p>
+            <p>
+              Alongside the framework, I shipped a supporting UI library and co-authored content guidelines for how Meta talks to advertisers about enforcement decisions.
+            </p>
+          </div>
+
+          <blockquote class="case-pull">
+            You can't ship the framework. You ship the implementations that prove it.
+          </blockquote>
+
+          <figure class="case-figure">
+            <div class="case-figure__frame case-figure__frame--empty">
+              Image · 01-meta-act1-pattern.jpg
+            </div>
+            <figcaption>
+              Pattern system overview — the resolution-path playbook that the rest of the architecture would borrow from.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ───────── Act 2 ───────── -->
+      <section class="case-section" aria-labelledby="act2-title">
+        <div class="case-section__inner">
+          <div class="case-section__label">
+            <span class="num">Act 2</span>
+            <span>Scaling cross-org</span>
+            <span class="era">· 2024 — 2025</span>
+          </div>
+          <h2 id="act2-title">Driving consistency through a <em>unified product stack.</em></h2>
+
+          <div class="case-prose">
+            <p>
+              By 2024, Meta had multiple resolution architectures running in parallel — for ads enforcement, organic content, subscription products, account recovery. Individually defensible. Collectively chaotic.
+            </p>
+            <p>
+              I co-led the unified cross-product resolution architecture: secured alignment with engineering and product leadership across the support and integrity orgs, landed it on multiple cross-org roadmaps, then drove it through a cross-org experimentation program that validated the design pattern across surfaces and use cases. The qualitative outcome: a meaningful business unlock and a shared resolution pattern other teams could reuse.
+            </p>
+
+            <h3>The flagship: Unified Support Home</h3>
+            <p>
+              The capstone was the <a href="https://about.fb.com/news/2025/12/making-it-easier-to-access-account-support-on-facebook-and-instagram/" target="_blank" rel="noopener">Unified Support Home</a> — Meta's centralized support hub for Facebook and Instagram, announced publicly in December 2025 and now rolling out globally on iOS and Android. The hub consolidated multiple legacy support experiences into one.
+            </p>
+            <p>
+              I co-led strategy and cross-org alignment, drove the executive-alignment deck that secured partnership with the Brand and Facebook teams, and integrated hacked-account recovery as a launch-milestone entry point. At a critical moment, <strong>the Facebook team brought me in</strong> to help shape the experience direction — the kind of cross-org pull I'm proudest of building, because it doesn't show up in any single artifact.
+            </p>
+          </div>
+
+          <blockquote class="case-pull">
+            Within the support hub, you can now report an account issue, find quick answers with the help of Meta AI-powered search, and more.
+            <cite>Meta Newsroom</cite>
+          </blockquote>
+
+          <div class="case-prose">
+            <p>
+              The <em>"and more"</em> is the entire architecture. The hub isn't a feature — it's the infrastructure that makes Act 3 possible.
+            </p>
+          </div>
+
+          <figure class="case-figure">
+            <div class="case-figure__frame case-figure__frame--empty">
+              Image · 01-meta-act2-hub.jpg
+            </div>
+            <figcaption>
+              Support-hub consolidation — multiple legacy support experiences into one.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ───────── Act 3 ───────── -->
+      <section class="case-section" aria-labelledby="act3-title">
+        <div class="case-section__inner">
+          <div class="case-section__label">
+            <span class="num">Act 3</span>
+            <span>AI-native consolidation</span>
+            <span class="era">· 2025 — 2026</span>
+          </div>
+          <h2 id="act3-title">The AI moment had arrived. The architecture absorbed it.</h2>
+
+          <div class="case-prose">
+            <p>
+              The Unified Support Home gave Meta a unified support <em>place</em>. The experience inside was still mostly traditional — search, FAQs, contact forms. The AI moment had arrived; the architecture hadn't absorbed it yet.
+            </p>
+            <p>
+              But here's the leapfrog: the resolution patterns from Acts 1 and 2 weren't just documented anymore — they were governance frameworks and code in the product. <strong>An AI assistant didn't need to invent the resolution layer. It needed to learn to orchestrate the one that already existed.</strong>
+            </p>
+            <p>
+              I led the design expansion of the <strong>Meta AI Support Assistant</strong> across Meta's <strong>advertiser support surfaces — Business Help Center and Business Support Home</strong>. For Business Help Center I designed the global assistant entry point, contextual entries on top-visited support articles (failed payments, account access, ad rejections), and an "Ask Meta AI" text-selection entry point that routes any question straight into the assistant.
+            </p>
+          </div>
+
+          <blockquote class="case-pull">
+            The new Meta AI support assistant is designed to help resolve account problems for you from start to finish… It can respond to requests in under five seconds.
+            <cite>Meta Newsroom</cite>
+          </blockquote>
+
+          <div class="case-prose">
+            <p>
+              That five-second, end-to-end action capability is the architecture I'd been building since the original pattern framework in 2022, finally given the AI layer that ties it together.
+            </p>
+            <p>
+              Operating at scale: as design lead for in-product support, I drove the experimentation strategy that significantly exceeded the org's annual business-impact targets across dozens of validated experiments. Alongside, I led <strong>regulatory-compliance design</strong> across multiple advertiser experiences (meaningful business-risk protection), established a <strong>design-governance program</strong> that scaled review and onboarding across integrator teams, and helped found a <strong>design-quality program</strong> for the org. I mentored designers across the team and supplemented manager capacity across time zones.
+            </p>
+            <p>
+              I also co-led the conceptual layer that lets others make these calls consistently: principles for how Meta deploys AI in support, vision sprints that set the direction for AI-native support, and the consolidation strategy reshaping the support roadmap going forward.
+            </p>
+          </div>
+
+          <figure class="case-system-viz">
+            <div class="case-system-viz__board">
+              <!-- Three surface chips — Facebook, Instagram, Business tools. -->
+              <div class="case-system-viz__pills" aria-hidden="true">
+                <span class="surface-pill">Facebook</span>
+                <span class="surface-pill">Instagram</span>
+                <span class="surface-pill">Business tools</span>
+              </div>
+
+              <!-- Tangled connector — series of overlapping loops that
+                   knot through the middle and exit right with an arrow.
+                   Drawn to evoke Paul's Sprint slide scribble. -->
+              <svg class="case-system-viz__connector" viewBox="0 0 320 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <g stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M 6,90
+                           C 18,40 60,30 60,80
+                           C 60,130 18,140 28,100
+                           C 38,55 88,55 88,100
+                           C 88,140 40,150 60,115
+                           C 80,75 130,75 130,115
+                           C 130,150 80,155 100,125
+                           C 120,85 170,85 170,125
+                           C 170,155 120,160 140,130
+                           C 160,95 215,95 215,130
+                           C 215,150 175,155 195,135
+                           C 215,118 250,118 260,128
+                           L 304,128" />
+                  <!-- Arrow head -->
+                  <path d="M 294,121 L 304,128 L 296,136" />
+                </g>
+              </svg>
+
+              <!-- MAIBA tray — the unified solution. -->
+              <div class="case-system-viz__solution">
+                <img src="/images/MAIBA_Tray.png" alt="Meta AI business assistant — the unified resolution tray" loading="lazy">
+              </div>
+            </div>
+            <figcaption>
+              Untangling support across Facebook, Instagram, and Business tools into one AI-powered resolution tray.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ───────── What this added up to (impact table) ───────── -->
+      <section class="case-section" aria-labelledby="impact-title">
+        <div class="case-section__inner">
+          <div class="case-section__label">
+            <span class="num">Impact</span>
+            <span>What this added up to</span>
+          </div>
+          <h2 id="impact-title">What this added up to.</h2>
+
+          <table class="impact-table" aria-label="Era-by-era impact summary">
+            <thead>
+              <tr>
+                <th scope="col">Era</th>
+                <th scope="col">What shipped</th>
+                <th scope="col">Outcome</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="year">2022 — 2023</td>
+                <td class="project">Pattern framework + first implementations</td>
+                <td class="impact">Stat-sig wins; 100% rollout on first surface; framework adopted on cross-pod roadmaps</td>
+              </tr>
+              <tr>
+                <td class="year">2024 — 2025</td>
+                <td class="project">Cross-product resolution architecture</td>
+                <td class="impact">Cross-org roadmap adoption; validated through experimentation at scale</td>
+              </tr>
+              <tr>
+                <td class="year">2025</td>
+                <td class="project">Unified Support Home</td>
+                <td class="impact">Announced publicly Dec 2025; global rollout on FB/IG</td>
+              </tr>
+              <tr>
+                <td class="year">2025 — 2026</td>
+                <td class="project">Meta AI Support Assistant expansion + AI deployment principles</td>
+                <td class="impact">End-to-end resolution capability across core advertiser surfaces</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p class="impact-total">
+            Quantified business impact and specific experimentation results are available under NDA in conversation.
+          </p>
+        </div>
+      </section>
+
+      <!-- ───────── What I'm proudest of ───────── -->
+      <section class="case-section" aria-labelledby="proud-title">
+        <div class="case-section__inner">
+          <div class="case-section__label">
+            <span class="num">Reflection</span>
+            <span>What I'm proudest of</span>
+          </div>
+          <h2 id="proud-title">It's not the headline number. It's the architecture story.</h2>
+
+          <div class="case-prose">
+            <p>
+              The pattern playbooks I shipped in 2022 became the governance frameworks adopted cross-org in 2024. Those frameworks became code in the cross-product resolution architecture, and that code became the substrate an AI assistant could orchestrate in 2026.
+            </p>
+            <p class="case-progression">
+              <strong>Guidelines → governance → code → AI-first.</strong> Each layer earned the next.
+            </p>
+            <p>
+              I plant seeds and tend them as they grow. That's a 4.8-year story, not a single-quarter story.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────── Growth + what's next ───────── -->
+      <section class="case-section" aria-labelledby="next-title">
+        <div class="case-section__inner">
+          <div class="case-section__label">
+            <span class="num">What's next</span>
+            <span>Growth &amp; the next bet</span>
+          </div>
+          <h2 id="next-title">Looking for the next architecture problem at this scope.</h2>
+
+          <div class="case-prose">
+            <p>
+              <strong>Three real growth areas I own:</strong> concise communication (I overexplain when I'm deep in architecture), strategic prioritization (now ruthless about what NOT to do), and escalating early instead of holding open commitments.
+            </p>
+            <p>
+              <strong>Two things I'm actively growing into:</strong> AI-augmented design process — piloting tools that compress prototyping and research cycles, and tracking the speed/quality tradeoffs honestly. And force-multiplier influence — moving from individual contribution to org-level signal, raising visibility of design impact with leadership, mentoring more designers, and making architecture decisions legible to the people funding the next bet.
+            </p>
+            <p>
+              I'm looking for the next architecture problem at this scope — somewhere I can plant seeds, tend them, and have them compound for 4–5 years. Support is one substrate. Identity and onboarding are others. Anywhere the <em>system</em> matters more than any individual flow.
+            </p>
+          </div>
+
+          <a class="case-cta" href="/#contact">
+            If that sounds like the work you're hiring for, let's talk
+            <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M3 12 H21 M14 5 L21 12 L14 19"/>
+            </svg>
+          </a>
+        </div>
+      </section>
+
+      <!-- ───────── About this case study (colophon) ───────── -->
+      <section class="case-section case-section--colophon" aria-labelledby="about-title">
+        <div class="case-section__inner">
+          <div class="case-section__label">
+            <span class="num">Colophon</span>
+            <span>About this case study</span>
+          </div>
+          <h2 id="about-title">A note on what's here, and what's not.</h2>
+          <div class="case-prose">
+            <p>
+              This is the externally publishable version of a longer internal narrative. Specific dollar figures, internal program names, and experimentation results are reserved for direct conversation under NDA. The architecture story above is what's important — and it stands on its own without the receipts.
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /.gated -->
+
+  </main>
+
+  <footer class="foot">
+    <div class="foot__meta">
+      <span>© <span class="foot__year">2026</span> Paul Petrowsky</span>
+      <a href="https://snacksdesign.com/" target="_blank" rel="noopener">Made with <span class="heart" aria-hidden="true">&hearts;</span> in Chicago</a>
+    </div>
+  </footer>
+
+  <!-- ───────── Password modal ───────── -->
+  <div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title" aria-hidden="true">
+    <div class="gate__card">
+      <h2 class="gate__title" id="gate-title">Password required</h2>
       <p class="gate__lede">
-        These chapters are shared with a small group. Drop the password to read.
+        The full case study is shared with a small group. Drop the password to read.
       </p>
       <form class="gate__form" id="gateForm" autocomplete="off">
         <input
@@ -732,254 +1380,42 @@
         <button type="submit">Read</button>
       </form>
       <p class="gate__hint" id="gateHint" aria-live="polite">
-        Don't have it? <a href="/#contact">Ask Paul.</a>
+        <a href="/">← Back to home</a>
       </p>
-      <a class="gate__back" href="/">← Back to home</a>
     </div>
   </div>
 
-  <!-- ───────── Nav ───────── -->
-  <nav class="site-nav" id="nav" aria-label="Primary">
-    <div class="site-nav__row">
-      <a href="https://snacksdesign.com" target="_blank" rel="noopener" class="logo" aria-label="SNACKS home">SNACKS</a>
-      <div class="site-nav__links">
-        <a href="/#work">Work</a>
-        <a href="https://www.linkedin.com/in/ppetrowsky" target="_blank" rel="noopener">LinkedIn</a>
-        <a href="/#contact">Contact</a>
-      </div>
-    </div>
-  </nav>
-
-  <div class="frame" aria-hidden="true"></div>
-
-  <main id="top">
-
-    <!-- ───────── Hero ───────── -->
-    <section class="case-hero" aria-labelledby="case-title">
-      <div class="case-hero__bg" aria-hidden="true">
-        <!-- Optional hero background image. Drop a wide, atmospheric
-             image at /images/chapters/01-meta-hero.jpg and uncomment.
-             The dark overlay handles legibility. -->
-        <!-- <img src="/images/chapters/01-meta-hero.jpg" alt="" loading="eager"> -->
-      </div>
-      <div class="case-hero__inner">
-        <a class="case-hero__back" href="/work.html">← All work</a>
-        <div class="case-hero__eyebrow">
-          <span class="num">01</span>
-          <span>Architecting Meta's Support</span>
-        </div>
-        <h1 id="case-title">
-          Designing the system <em>that designs the flows.</em>
-        </h1>
-        <p class="case-hero__sub">
-          Five years inside Central Integrity &amp; Support — rebuilding the layer underneath every help, recovery, and report experience across Facebook, Instagram, and Meta's business surfaces.
-        </p>
-        <dl class="case-hero__meta">
-          <div>
-            <dt>Role</dt>
-            <dd>Principal Product Designer</dd>
-          </div>
-          <div>
-            <dt>Team</dt>
-            <dd>Central Integrity &amp; Support</dd>
-          </div>
-          <div>
-            <dt>Years</dt>
-            <dd>2021 — Present</dd>
-          </div>
-          <div>
-            <dt>Surfaces</dt>
-            <dd>Facebook · Instagram · Business</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
-
-    <!-- ───────── 01 Challenge ───────── -->
-    <section class="case-section" aria-labelledby="challenge-title">
-      <div class="case-section__inner">
-        <div class="case-section__label">
-          <span class="num">01</span>
-          <span>Challenge</span>
-        </div>
-        <h2 id="challenge-title">The wall behind the report button.</h2>
-
-        <div class="case-prose">
-          <p>
-            Across Meta's surfaces, billions of people hit the same wall when something goes wrong. They report a post. They appeal a decision. They try to recover an account. Their request goes into a queue. The flow tells them very little. They never quite know if they were heard.
-          </p>
-          <p>
-            That wall wasn't intentional. It was the accumulated result of each team solving support in their own corner, with their own primitives, on their own timeline. The patchwork read — accurately — like the company wasn't listening.
-          </p>
-          <p>
-            I joined <a href="https://www.meta.com/" target="_blank" rel="noopener">Meta</a>'s Central Integrity &amp; Support team in 2021 to design support flows. About six months in, the real problem came into focus: better flows weren't going to fix this. We needed something underneath the flows.
-          </p>
-        </div>
-
-        <!-- Featured before-state visual. Drop a wide image at the path
-             below to bring it forward. The pattern placeholder shows
-             where it'll sit. -->
-        <figure class="case-figure">
-          <div class="case-figure__frame case-figure__frame--empty">
-            Image · 01-meta-before.jpg
-          </div>
-          <figcaption>
-            The original landscape — multiple support entry points, no shared vocabulary, every team inventing its own primitives.
-          </figcaption>
-        </figure>
-
-      </div>
-    </section>
-
-    <!-- ───────── 02 Approach ───────── -->
-    <section class="case-section" aria-labelledby="approach-title">
-      <div class="case-section__inner">
-        <div class="case-section__label">
-          <span class="num">02</span>
-          <span>Approach</span>
-        </div>
-        <h2 id="approach-title">Stop drawing flows. Start designing the system that draws them.</h2>
-
-        <div class="case-prose">
-          <p>
-            The reframe was this: pull out a small set of reusable primitives. Wire them to a shared taxonomy of problems, audiences, and recovery paths. Connect the taxonomy to the model that decides what to surface next. Once that exists, teams across the company can ship support experiences without inventing a new vocabulary every time.
-          </p>
-          <p>
-            The work spans research, product strategy, design systems, information architecture, and — increasingly — the prompts and rails for AI-assisted recovery. Six product surfaces. Three product organizations. One shared layer underneath.
-          </p>
-        </div>
-
-        <blockquote class="case-pull">
-          These days I'm not designing flows — I'm designing the system that designs the flows.
-          <cite>Paul, year four</cite>
-        </blockquote>
-
-        <div class="case-divider"><span>Three moves</span></div>
-
-        <ol class="case-steps">
-          <li>
-            <h3>Map the territory</h3>
-            <p>Audit every existing support experience across IG, Facebook, and Business. Tag the patterns. Surface where teams diverged silently.</p>
-          </li>
-          <li>
-            <h3>Build the primitives</h3>
-            <p>A small composable kit — status, context, action, recovery, escalation — that any team can stitch into a flow without re-litigating the basics.</p>
-          </li>
-          <li>
-            <h3>Wire the brain</h3>
-            <p>Connect primitives to a shared taxonomy + AI-assisted recovery so the system decides what to show, not just where to put it.</p>
-          </li>
-        </ol>
-
-        <!-- Two-up: process artifacts. Drop images to bring forward. -->
-        <div class="case-gallery">
-          <figure>
-            <div class="case-figure__frame case-figure__frame--empty">Image · 01-meta-system.jpg</div>
-            <figcaption>System map — primitives ↔ taxonomy ↔ recovery rails.</figcaption>
-          </figure>
-          <figure>
-            <div class="case-figure__frame case-figure__frame--empty">Image · 01-meta-flows.jpg</div>
-            <figcaption>Six surfaces, one shared vocabulary.</figcaption>
-          </figure>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ───────── 03 Outcome ───────── -->
-    <section class="case-section" aria-labelledby="outcome-title">
-      <div class="case-section__inner">
-        <div class="case-section__label">
-          <span class="num">03</span>
-          <span>Outcome</span>
-        </div>
-        <h2 id="outcome-title">From a wall into a system.</h2>
-
-        <div class="case-prose">
-          <p>
-            The first public-facing wave shipped in <a href="https://about.fb.com/news/2025/12/making-it-easier-to-access-account-support-on-facebook-and-instagram/" target="_blank" rel="noopener">December 2025</a> — people can now see what's happening with their reports, follow up, and recover the account, post, or ad without getting routed to a human queue first.
-          </p>
-          <p>
-            Six surfaces are live on the shared layer. The patterns are documented, the taxonomy is owned by partners across three orgs, and AI-assisted recovery is rolling out one slice at a time. The system isn't done — it's the kind of work that never really is — but for the first time, it's a system.
-          </p>
-        </div>
-
-        <div class="case-metrics">
-          <div class="case-metric">
-            <span class="num">6</span>
-            <span class="label">Product surfaces on the shared layer</span>
-          </div>
-          <div class="case-metric">
-            <span class="num">3</span>
-            <span class="label">Product organizations now using the same primitives</span>
-          </div>
-          <div class="case-metric">
-            <span class="num">5 yrs</span>
-            <span class="label">From flow designer to systems lead</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ───────── Up next ───────── -->
-    <section class="case-next" aria-label="Up next">
-      <div class="case-next__inner">
-        <div class="case-next__label">Up next — Chapter 02</div>
-        <a class="case-next__link" href="/work.html">
-          <div class="case-next__thumb">
-            <img src="/images/chapters/03-gemini-mobile.jpg" alt="" loading="lazy" onerror="this.style.display='none'">
-          </div>
-          <h3 class="case-next__head">
-            <svg class="lock" viewBox="0 0 13 14" aria-hidden="true">
-              <path d="M3 6V4a3.5 3.5 0 1 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.4"/>
-              <rect x="2" y="6" width="9" height="7" rx="1.2" fill="currentColor"/>
-            </svg>
-            Dawn of Gemini Mobile — a launch that became a category.
-          </h3>
-          <svg class="case-next__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M3 12 H21 M14 5 L21 12 L14 19"/>
-          </svg>
-        </a>
-      </div>
-    </section>
-
-  </main>
-
-  <footer class="foot">
-    <div class="foot__meta">
-      <span>© <span class="foot__year">2026</span> Paul Petrowsky</span>
-      <a href="https://snacksdesign.com/" target="_blank" rel="noopener">Made with <span class="heart" aria-hidden="true">&hearts;</span> in Chicago</a>
-    </div>
-  </footer>
-
   <script>
     /* ───────── Password gate ─────────
-       Shared password is stored in sessionStorage so the gate only
-       prompts once per browser session. To change the password, edit
-       GATE_PW below and redeploy.
-
-       Note: this is intentionally light protection — it keeps casual
-       visitors out, not motivated ones. For sensitive content move to
-       a server-side gate (Netlify Identity, Cloudflare Access, etc.). */
+       Pattern: the chapter renders in full but is locked behind a
+       full-viewport frosted overlay with a centered password modal.
+       Entering the correct password removes body.is-locked, which
+       dissolves both the blur and the modal in one motion. The
+       overlay is non-dismissible — visitors must enter the password
+       or navigate away. Persists unlock via sessionStorage so reloads
+       in the same session skip the gate.
+       To change the password, edit GATE_PW below and redeploy. */
     (function initGate() {
       var GATE_PW   = 'makeprogress';        // ← shared password
       var STORE_KEY = 'pp:chapters:unlock';
 
       var body  = document.body;
-      var gate  = document.getElementById('gate');
       var form  = document.getElementById('gateForm');
       var input = document.getElementById('gatePw');
       var hint  = document.getElementById('gateHint');
 
+      // Returning visitor in the same session — already unlocked.
       try {
         if (sessionStorage.getItem(STORE_KEY) === GATE_PW) {
           body.classList.remove('is-locked');
-          return;
         }
-      } catch (_) { /* sessionStorage blocked — show the gate */ }
+      } catch (_) {}
 
-      // Focus the input on next tick so iOS shows the keyboard.
-      setTimeout(function () { input.focus(); }, 50);
+      // Focus the input on next tick so the keyboard appears on iOS
+      // and desktop users can type immediately.
+      if (body.classList.contains('is-locked')) {
+        setTimeout(function () { input.focus(); }, 60);
+      }
 
       form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -989,7 +1425,6 @@
           body.classList.remove('is-locked');
         } else {
           input.classList.add('is-wrong');
-          hint.innerHTML = "That's not it. <a href=\"/#contact\">Ask Paul</a>.";
           input.select();
         }
       });
