@@ -365,6 +365,23 @@
       transition: background .15s ease;
     }
     .gate__form button:hover { background: var(--red); }
+    /* Escape hatch — subtle text link below the form so visitors who
+       don't have the password can navigate away without using the
+       browser back button. */
+    .gate__hint {
+      font-family: var(--body);
+      font-size: 13px;
+      color: var(--muted);
+      margin: 18px 0 0;
+      text-align: center;
+    }
+    .gate__hint a {
+      color: var(--fg);
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 1px;
+      text-decoration: none;
+    }
+    .gate__hint a:hover { color: var(--red); border-bottom-color: var(--red); }
 
     /* ───────── Draft notice — visible only after unlock so visitors
        know the chapter is still being written ───────── */
@@ -500,6 +517,9 @@
         >
         <button type="submit">Unlock</button>
       </form>
+      <p class="gate__hint">
+        <a href="/">← Back to home</a>
+      </p>
     </div>
   </div>
 
