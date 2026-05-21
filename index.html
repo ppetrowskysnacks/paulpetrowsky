@@ -1214,6 +1214,117 @@
       .site-nav__links a:nth-child(2) { display: none; }
       .prose p { font-size: 17px; }
     }
+
+    /* ───────── Video modal — Halloween display ─────────
+       Full-viewport overlay with a frosted-blur backdrop, centered
+       9:16 player frame, and a circle close button in the top-right.
+       Hidden by default; JS toggles .is-open. The iframe src is set
+       on open so YouTube doesn't load until the modal is actually
+       summoned. */
+    .video-link {
+      color: var(--fg);
+      text-decoration: none;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 1px;
+      transition: color .15s ease, border-color .15s ease;
+    }
+    .video-link:hover {
+      color: var(--red);
+      border-bottom-color: var(--red);
+    }
+
+    .video-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(16px, 4vw, 48px);
+      opacity: 0;
+      transition: opacity .25s ease;
+    }
+    .video-modal.is-open {
+      display: flex;
+      opacity: 1;
+    }
+    .video-modal__backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(20, 18, 22, 0.55);
+      backdrop-filter: blur(16px) saturate(140%);
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+      cursor: pointer;
+    }
+    .video-modal__frame {
+      position: relative;
+      /* 9:16 vertical aspect for YouTube Shorts. Width bounded so it
+         never gets bigger than makes sense; on portrait phones the
+         height bound prevents it overflowing the viewport. */
+      width: min(360px, 100%);
+      max-height: min(90vh, 720px);
+      aspect-ratio: 9 / 16;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.40);
+      transform: translateY(8px);
+      transition: transform .25s cubic-bezier(0.2, 0.85, 0.2, 1);
+    }
+    .video-modal.is-open .video-modal__frame { transform: translateY(0); }
+    .video-modal__player {
+      position: absolute;
+      inset: 0;
+    }
+    .video-modal__player iframe {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border: 0;
+    }
+    /* Close button — sits INSIDE the frame's top-right corner so it
+       isn't clipped by the frame's overflow:hidden (which we need for
+       the rounded corners). Floats above the iframe via z-index. White
+       pill so it's readable over any video content underneath. */
+    .video-modal__close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 0;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--fg);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.30);
+      transition: transform .15s ease, color .15s ease, background .15s ease;
+      z-index: 3;
+    }
+    .video-modal__close:hover {
+      transform: scale(1.08);
+      color: var(--red);
+      background: #fff;
+    }
+    .video-modal__close:focus-visible {
+      outline: 2px solid var(--red);
+      outline-offset: 3px;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
   </style>
   <!-- ───────── Analytics — GoatCounter ─────────
        Privacy-friendly pageview + event tracking. No cookies, no banner,
@@ -1295,6 +1406,10 @@
 
         <p>
           <strong>Over twenty years in design, from book covers to platform architecture.</strong> I'm a fan of multi-brand systems, support-shaped problems, and dad jokes.
+        </p>
+
+        <p>
+          In my personal time, I love to build things with my 4 kids — most notably our annual <a href="https://www.youtube.com/shorts/1rl0RdDjtLk" class="video-link" data-video-id="1rl0RdDjtLk" aria-haspopup="dialog" aria-controls="videoModal" target="_blank" rel="noopener">Halloween display</a>.
         </p>
       </div>
     </section>
@@ -2327,6 +2442,98 @@
         if (href === 'https://www.linkedin.com/in/davidmbean/') {
           gcCount('outbound-david-bean');
         }
+      });
+    })();
+  </script>
+
+  <!-- ───────── Video modal ─────────
+       Opens when a link tagged with .video-link is clicked. Embeds the
+       linked YouTube short, blurs the page behind it, and closes via
+       X button, click-outside, or Escape. The iframe src is set on
+       open and cleared on close so the video doesn't keep playing
+       (or even load) in the background. -->
+  <div class="video-modal" id="videoModal" role="dialog" aria-modal="true" aria-labelledby="video-modal-title" aria-hidden="true">
+    <div class="video-modal__backdrop" data-modal-close></div>
+    <div class="video-modal__frame" role="document">
+      <button class="video-modal__close" type="button" aria-label="Close video" data-modal-close>
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <h2 id="video-modal-title" class="visually-hidden">Halloween display video</h2>
+      <div class="video-modal__player">
+        <iframe
+          src=""
+          title="Halloween display"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+          referrerpolicy="strict-origin-when-cross-origin"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ───────── Video modal — open on .video-link click ─────────
+       Sets the iframe src to the YouTube embed URL on open, blanks it
+       on close so playback stops. Closes on X, backdrop click, or Esc.
+       The video link still has a real href so meta-clicks (open in new
+       tab) work for users who prefer that. */
+    (function initVideoModal() {
+      var modal   = document.getElementById('videoModal');
+      if (!modal) return;
+      var triggers = document.querySelectorAll('.video-link');
+      var iframe  = modal.querySelector('iframe');
+      var closers = modal.querySelectorAll('[data-modal-close]');
+      var prevFocus = null;
+
+      function openModal(videoId, title) {
+        prevFocus = document.activeElement;
+        // YouTube embed — let the user press play instead of autoplaying.
+        // Browser autoplay policies vary (Chrome/Safari often block
+        // autoplay with sound) and a silent black frame is worse than
+        // a thumbnail with a visible play button.
+        iframe.src = 'https://www.youtube.com/embed/' + encodeURIComponent(videoId)
+                   + '?rel=0&modestbranding=1&playsinline=1';
+        if (title) iframe.title = title;
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        // Move focus to the close button for accessibility.
+        var closeBtn = modal.querySelector('.video-modal__close');
+        if (closeBtn) closeBtn.focus({ preventScroll: true });
+      }
+
+      function closeModal() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        // Removing the src attribute is what stops playback — pausing
+        // the iframe via postMessage would require the YouTube IFrame
+        // Player API. removeAttribute is cleaner than `iframe.src = ''`
+        // which in some browsers resolves to the current page URL.
+        iframe.removeAttribute('src');
+        document.body.style.overflow = '';
+        if (prevFocus && prevFocus.focus) prevFocus.focus({ preventScroll: true });
+      }
+
+      triggers.forEach(function (t) {
+        t.addEventListener('click', function (e) {
+          // Let users open in a new tab via cmd/ctrl-click or middle-click.
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+          e.preventDefault();
+          var id = t.getAttribute('data-video-id');
+          if (!id) return;
+          openModal(id, t.textContent + ' — YouTube');
+        });
+      });
+
+      closers.forEach(function (c) {
+        c.addEventListener('click', closeModal);
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
       });
     })();
   </script>
