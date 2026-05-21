@@ -281,6 +281,21 @@
       position: relative;
       perspective: 1400px;
     }
+    /* One-time wobble fired from JS via IntersectionObserver — quietly
+       hints that the portrait is interactive without adding any visible
+       UI affordance. Damped oscillation so it settles naturally rather
+       than just snapping back. Disabled for reduced-motion users. */
+    @keyframes portrait-wobble {
+      0%   { transform: rotate(0deg); }
+      20%  { transform: rotate(-4deg); }
+      50%  { transform: rotate(2.5deg); }
+      80%  { transform: rotate(-1deg); }
+      100% { transform: rotate(0deg); }
+    }
+    .portrait.is-introducing { animation: portrait-wobble 800ms ease-in-out; }
+    @media (prefers-reduced-motion: reduce) {
+      .portrait.is-introducing { animation: none; }
+    }
     .portrait__flipper {
       position: relative;
       width: 100%;
@@ -1924,6 +1939,39 @@
       var flipper = portrait.querySelector('.portrait__flipper');
       if (!flipper) return;
 
+      /* Subtle "I'm interactive" cue — when the portrait first enters
+         the viewport, briefly wobble the card (damped left-right-settle)
+         to hint that it can be touched. Fires once per page load, and
+         only if the user hasn't already explored the easter-egg
+         interaction within this session. Honors reduced-motion via the
+         CSS @media rule above. */
+      (function wobbleOnIntro() {
+        if (!('IntersectionObserver' in window)) return;
+        try {
+          if (sessionStorage.getItem('pp:portrait-flipped') === '1') return;
+        } catch (_) {}
+
+        var fired = false;
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting && !fired) {
+              fired = true;
+              io.disconnect();
+              // Small delay so the wobble doesn't compete with initial
+              // paint / font swap. By the time it fires, the user is
+              // settled on the page and the motion will be noticed.
+              setTimeout(function () {
+                portrait.classList.add('is-introducing');
+                setTimeout(function () {
+                  portrait.classList.remove('is-introducing');
+                }, 850);
+              }, 700);
+            }
+          });
+        }, { threshold: 0.6 });
+        io.observe(portrait);
+      })();
+
       var baseAngle = 0;           // 0 = front, 180 = back
       var dragging  = false;
       var startX    = 0;
@@ -1941,6 +1989,9 @@
       function setFace(face) {
         baseAngle = face === 'back' ? 180 : 0;
         portrait.classList.toggle('is-flipped', face === 'back');
+        // Remember that the user has explored the flip so the wobble
+        // affordance doesn't fire again on later visits in this session.
+        try { sessionStorage.setItem('pp:portrait-flipped', '1'); } catch (_) {}
       }
       function toggleFace() {
         setFace(baseAngle === 0 ? 'back' : 'front');
