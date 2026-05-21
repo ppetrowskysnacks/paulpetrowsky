@@ -281,18 +281,21 @@
       position: relative;
       perspective: 1400px;
     }
-    /* One-time wobble fired from JS via IntersectionObserver — quietly
+    /* One-time wobble fired from JS shortly after page load — quietly
        hints that the portrait is interactive without adding any visible
        UI affordance. Damped oscillation so it settles naturally rather
-       than just snapping back. Disabled for reduced-motion users. */
+       than just snapping back. Uses the standalone `rotate:` property
+       (Safari 14.1+) so it composes cleanly with the .portrait element's
+       perspective context and doesn't clobber any other transforms.
+       Disabled for reduced-motion users via the @media rule below. */
     @keyframes portrait-wobble {
-      0%   { transform: rotate(0deg); }
-      20%  { transform: rotate(-4deg); }
-      50%  { transform: rotate(2.5deg); }
-      80%  { transform: rotate(-1deg); }
-      100% { transform: rotate(0deg); }
+      0%   { rotate: 0deg; }
+      20%  { rotate: -5deg; }
+      50%  { rotate: 3deg; }
+      80%  { rotate: -1.5deg; }
+      100% { rotate: 0deg; }
     }
-    .portrait.is-introducing { animation: portrait-wobble 800ms ease-in-out; }
+    .portrait.is-introducing { animation: portrait-wobble 850ms ease-in-out; }
     @media (prefers-reduced-motion: reduce) {
       .portrait.is-introducing { animation: none; }
     }
@@ -2054,37 +2057,28 @@
       var flipper = portrait.querySelector('.portrait__flipper');
       if (!flipper) return;
 
-      /* Subtle "I'm interactive" cue — when the portrait first enters
-         the viewport, briefly wobble the card (damped left-right-settle)
-         to hint that it can be touched. Fires once per page load, and
-         only if the user hasn't already explored the easter-egg
-         interaction within this session. Honors reduced-motion via the
-         CSS @media rule above. */
+      /* Subtle "I'm interactive" cue — a brief one-time wobble shortly
+         after page load to hint that the card can be touched. Skipped
+         if the user has already explored the flip in this session.
+         Honors prefers-reduced-motion via the CSS @media rule above.
+         Using a plain setTimeout here (rather than IntersectionObserver)
+         because the portrait lives in the hero — it's already in view
+         on every page load, and the timer keeps the timing predictable
+         across browsers (notably iOS Safari, where IO entry timing can
+         be flaky on hero-mounted elements). */
       (function wobbleOnIntro() {
-        if (!('IntersectionObserver' in window)) return;
         try {
           if (sessionStorage.getItem('pp:portrait-flipped') === '1') return;
         } catch (_) {}
 
-        var fired = false;
-        var io = new IntersectionObserver(function (entries) {
-          entries.forEach(function (entry) {
-            if (entry.isIntersecting && !fired) {
-              fired = true;
-              io.disconnect();
-              // Small delay so the wobble doesn't compete with initial
-              // paint / font swap. By the time it fires, the user is
-              // settled on the page and the motion will be noticed.
-              setTimeout(function () {
-                portrait.classList.add('is-introducing');
-                setTimeout(function () {
-                  portrait.classList.remove('is-introducing');
-                }, 850);
-              }, 700);
-            }
-          });
-        }, { threshold: 0.6 });
-        io.observe(portrait);
+        // Wait until the page has had a beat to settle (fonts, layout)
+        // so the wobble lands on a stable composition.
+        setTimeout(function () {
+          portrait.classList.add('is-introducing');
+          setTimeout(function () {
+            portrait.classList.remove('is-introducing');
+          }, 900);
+        }, 900);
       })();
 
       var baseAngle = 0;           // 0 = front, 180 = back
