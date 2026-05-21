@@ -1409,7 +1409,7 @@
         </p>
 
         <p>
-          In my personal time, I love to build things with my 4 kids — most notably our annual <a href="https://www.youtube.com/shorts/1rl0RdDjtLk" class="video-link" data-video-id="1rl0RdDjtLk" aria-haspopup="dialog" aria-controls="videoModal" target="_blank" rel="noopener">Halloween display</a>.
+          In my personal time, I love to create and build things with my kids, most notably our annual <a href="https://www.youtube.com/shorts/1rl0RdDjtLk" class="video-link" data-video-id="1rl0RdDjtLk" aria-haspopup="dialog" aria-controls="videoModal" target="_blank" rel="noopener">Halloween display</a>.
         </p>
       </div>
     </section>
@@ -2490,12 +2490,12 @@
 
       function openModal(videoId, title) {
         prevFocus = document.activeElement;
-        // YouTube embed — let the user press play instead of autoplaying.
-        // Browser autoplay policies vary (Chrome/Safari often block
-        // autoplay with sound) and a silent black frame is worse than
-        // a thumbnail with a visible play button.
+        // Autoplay on open — the user's click on the link counts as a
+        // user gesture, which lets most browsers honor unmuted autoplay.
+        // If a stricter browser blocks it, the user still sees the
+        // YouTube thumbnail with a play button overlay.
         iframe.src = 'https://www.youtube.com/embed/' + encodeURIComponent(videoId)
-                   + '?rel=0&modestbranding=1&playsinline=1';
+                   + '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
         if (title) iframe.title = title;
         modal.classList.add('is-open');
         modal.setAttribute('aria-hidden', 'false');
